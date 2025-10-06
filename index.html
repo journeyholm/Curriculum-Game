@@ -1,0 +1,2949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamify: Your Classroom Game Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Poppins:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        @keyframes backgroundPan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes bugCrawl {
+            from { left: -10%; }
+            to { left: 110%; }
+        }
+        @keyframes squish-pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(0.5); opacity: 0; }
+        }
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+        .fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        /* --- Themes & Dynamic Backgrounds --- */
+        body {
+            --bg-color: #0f172a;
+            --text-color: #cbd5e1;
+            --header-color: #5eead4;
+            --primary-btn-bg: #0d9488;
+            --primary-btn-hover-bg: #0f766e;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --card-border: #334155;
+            --gem-color: #fde047;
+            background-image: linear-gradient(45deg, rgba(100, 116, 139, 0.1) 25%, transparent 25%), linear-gradient(-45deg, rgba(100, 116, 139, 0.1) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(100, 116, 139, 0.1) 75%), linear-gradient(-45deg, transparent 75%, rgba(100, 116, 139, 0.1) 75%);
+            background-size: 20px 20px;
+            animation: backgroundPan 60s linear infinite;
+        }
+        body.light-mode {
+            --bg-color: #f1f5f9;
+            --text-color: #1e293b;
+            --header-color: #0f766e;
+            --primary-btn-bg: #0d9488;
+            --primary-btn-hover-bg: #115e59;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: #cbd5e1;
+            background-image: linear-gradient(45deg, rgba(203, 213, 225, 0.5) 25%, transparent 25%), linear-gradient(-45deg, rgba(203, 213, 225, 0.5) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(203, 213, 225, 0.5) 75%), linear-gradient(-45deg, transparent 75%, rgba(203, 213, 225, 0.5) 75%);
+        }
+        body[data-theme="chalkboard"] {
+            --bg-color: #3a3a3a;
+            --text-color: #fff;
+            --header-color: #fef3c7;
+            --primary-btn-bg: #d97706;
+            --primary-btn-hover-bg: #b45309;
+            --card-bg: rgba(20,20,20,0.7);
+            --card-border: #555;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%233a3a3a"/><path d="M0 50 Q 25 25, 50 50 T 100 50" stroke="%234a4a4a" stroke-width="1" fill="none"/></svg>');
+        }
+         body[data-theme="notebook"] {
+            --bg-color: #f5f3f0;
+            --text-color: #333;
+            --header-color: #2563eb;
+            --primary-btn-bg: #2563eb;
+            --primary-btn-hover-bg: #1d4ed8;
+            --card-bg: rgba(255,255,255,0.8);
+            --card-border: #ddd;
+            font-family: 'Courier New', monospace;
+            background-image: linear-gradient(rgba(0,0,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        body[data-theme="90s"] {
+            --bg-color: #0d042d;
+            --text-color: #f0f0f0;
+            --header-color: #ff6ac1;
+            --primary-btn-bg: #5a4fcf;
+            --primary-btn-hover-bg: #4c44b8;
+            --card-bg: rgba(0,0,0,0.5);
+            --card-border: #5a4fcf;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #0d042d;
+            background-image: 
+                linear-gradient(30deg, #5a4fcf 12%, transparent 12.5%, transparent 87%, #5a4fcf 87.5%, #5a4fcf),
+                linear-gradient(150deg, #5a4fcf 12%, transparent 12.5%, transparent 87%, #5a4fcf 87.5%, #5a4fcf),
+                linear-gradient(30deg, #5a4fcf 12%, transparent 12.5%, transparent 87%, #5a4fcf 87.5%, #5a4fcf),
+                linear-gradient(150deg, #5a4fcf 12%, transparent 12.5%, transparent 87%, #5a4fcf 87.5%, #5a4fcf),
+                linear-gradient(60deg, #5a4fcf77 25%, transparent 25.5%, transparent 75%, #5a4fcf77 75%, #5a4fcf77), 
+                linear-gradient(60deg, #5a4fcf77 25%, transparent 25.5%, transparent 75%, #5a4fcf77 75%, #5a4fcf77);
+            background-size: 80px 140px;
+            background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.5s, color 0.5s, cursor 0.2s;
+        }
+        h1, h2, h3 { color: var(--header-color); transition: color 0.5s; }
+        .primary-btn { background-color: var(--primary-btn-bg); transition: background-color 0.5s; }
+        .primary-btn:hover { background-color: var(--primary-btn-hover-bg); }
+        .card { background-color: var(--card-bg); border-color: var(--card-border); transition: background-color 0.5s, border-color 0.5s; }
+        .gem-text { color: var(--gem-color); }
+        
+        #ai-helper.active { transform: translateX(0); }
+        #ai-helper.active #ai-speech-bubble { opacity: 1; transition-delay: 0.3s; }
+        #ai-robot-svg { animation: bob 3s ease-in-out infinite; cursor: pointer; }
+        
+        /* Mini-game styles */
+        .bug { animation-name: bugCrawl; animation-timing-function: linear; animation-iteration-count: infinite; }
+        .bug-squashed { animation: squish-pop 0.4s ease-out forwards; }
+        .simon-btn { transition: background-color 0.1s, transform 0.1s; }
+        .simon-btn.lit { transform: scale(1.05); filter: brightness(1.5); }
+        .code-line-bug { cursor: pointer; transition: background-color 0.2s; }
+        .code-line-bug:hover { background-color: rgba(255, 100, 100, 0.2); }
+        .prompt-block { cursor: pointer; }
+        .prompt-block.held { opacity: 0.5; border-style: dashed; }
+        .maze-cell { transition: background-color 0.2s; }
+        .memory-card, .showcase-memory-card { transition: transform 0.5s; }
+        .memory-card.flipped, .showcase-memory-card.flipped { transform: rotateY(180deg); }
+        .progress-bar-container { background-color: rgba(0,0,0,0.3); border-radius: 9999px; overflow: hidden; height: 8px; }
+        .progress-bar-fill { background-color: var(--header-color); height: 100%; transition: width 0.5s ease-in-out; }
+        .tab-btn.active { background-color: var(--primary-btn-bg); }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="font-['Inter',_sans_serif] antialiased">
+
+    <div id="app" class="container mx-auto p-4 md:p-6 min-h-screen flex flex-col items-center">
+        
+        <header id="game-header" class="w-full max-w-7xl mb-6 hidden">
+            <div class="flex justify-between items-center bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl shadow-lg p-3">
+                <h1 class="text-2xl font-bold">Gamify Your Curriculum</h1>
+                <div class="flex items-center gap-2 md:gap-4">
+                    <div id="gem-counter" class="flex items-center gap-2 text-xl font-bold gem-text"><span>0</span><span>💎</span></div>
+                    <button id="theme-toggle-btn" class="bg-slate-600 hover:bg-slate-700 text-white font-bold p-2 rounded-lg transition-transform hover:scale-105 hidden" title="Toggle Light/Dark Mode">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </button>
+                    <button id="home-btn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition-transform hover:scale-105">Home</button>
+                    <button id="prompts-library-btn" class="primary-btn text-white font-bold py-2 px-4 rounded-lg transition-transform hover:scale-105 hidden">Prompts</button>
+                    <button id="restart-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-transform hover:scale-105">Restart</button>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content" class="w-full max-w-7xl card backdrop-blur-sm border rounded-xl shadow-2xl p-6 md:p-8 flex-grow">
+            <!-- Game content dynamically rendered here -->
+        </main>
+        
+        <section id="badges-section" class="w-full max-w-7xl mt-6 hidden">
+            <h3 class="text-xl font-bold text-center text-amber-400 mb-3">Your Badges</h3>
+            <div id="badges-container" class="flex flex-wrap justify-center gap-2 p-4 card rounded-lg min-h-[50px]"></div>
+        </section>
+
+        <!-- Modals -->
+        <div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="card pop-in rounded-lg shadow-xl p-6 w-full max-w-sm text-center border">
+                <div id="notification-icon" class="mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full"></div>
+                <p id="notification-message" class="text-lg text-white mb-6"></p>
+                <button id="notification-close-btn" class="primary-btn text-white font-bold py-2 px-6 rounded-lg w-full">Got it!</button>
+                <div id="notification-share-btn-container" class="w-full mt-2"></div>
+            </div>
+        </div>
+        <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="card pop-in rounded-lg shadow-xl p-6 w-full max-w-sm text-center border">
+                <div id="confirm-icon" class="mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full bg-red-500/20">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h3 id="confirm-title" class="text-xl font-bold text-white mb-2">Are you sure?</h3>
+                <p id="confirm-message" class="text-slate-400 mb-6"></p>
+                <div class="flex justify-center gap-4">
+                    <button id="confirm-cancel-btn" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-lg w-1/2">Cancel</button>
+                    <button id="confirm-ok-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg w-1/2">Confirm</button>
+                </div>
+            </div>
+        </div>
+        <div id="library-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="card pop-in rounded-lg shadow-xl p-6 w-full max-w-4xl border relative h-4/5 flex flex-col">
+                <button id="close-library-btn" class="absolute top-4 right-4 text-2xl hover:text-red-500">&times;</button>
+                <h2 id="library-title" class="text-3xl font-bold text-center mb-6">Library</h2>
+                <div id="library-content" class="overflow-y-auto space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Helper -->
+    <div id="ai-helper" class="fixed top-28 right-6 z-40 transition-transform transform translate-x-[150%] duration-500 ease-in-out flex items-center">
+        <div id="ai-speech-bubble" class="relative w-64 bg-slate-800 border border-sky-400 p-4 rounded-lg shadow-lg text-white opacity-0 transition-opacity duration-300 mr-3">
+            <p id="ai-text" class="text-sm"></p>
+            <div class="absolute top-1/2 -translate-y-1/2 right-[-10px] w-0 h-0 border-t-[10px] border-t-transparent border-l-[10px] border-l-sky-400 border-b-[10px] border-b-transparent"></div>
+        </div>
+        <div id="ai-robot-container"></div>
+    </div>
+
+    <script>
+        const elements = {
+            mainContent: document.getElementById('main-content'),
+            gameHeader: document.getElementById('game-header'),
+            badgesSection: document.getElementById('badges-section'),
+            badgesContainer: document.getElementById('badges-container'),
+            gemCounter: document.getElementById('gem-counter'),
+            notificationModal: document.getElementById('notification-modal'),
+            libraryModal: document.getElementById('library-modal'),
+            libraryTitle: document.getElementById('library-title'),
+            libraryContent: document.getElementById('library-content'),
+            aiHelper: document.getElementById('ai-helper'),
+            aiHelperText: document.getElementById('ai-text'),
+            aiRobotContainer: document.getElementById('ai-robot-container'),
+            confirmModal: document.getElementById('confirm-modal'),
+        };
+        const buttons = {
+            restart: document.getElementById('restart-btn'),
+            openPromptsLibrary: document.getElementById('prompts-library-btn'),
+            closeLibrary: document.getElementById('close-library-btn'),
+            home: document.getElementById('home-btn'),
+            closeNotification: document.getElementById('notification-close-btn'),
+            confirmOk: document.getElementById('confirm-ok-btn'),
+            confirmCancel: document.getElementById('confirm-cancel-btn'),
+        };
+
+        const DEFAULT_GAME_STATE = {
+            view: 'home', // home, game, shop, quiz-creator, play-custom-quiz
+            currentPath: 'core',
+            progress: { core: 0, styling: 0, audio: 0, mechanics: 0 },
+            completedPaths: [],
+            badges: [], gems: 0,
+            purchasedItems: ['theme-default', 'cursor-default', 'ai-default'],
+            activeTheme: 'theme-default',
+            activeCursor: 'cursor-default',
+            activeAiSkin: 'ai-default',
+            colorMode: 'dark', // 'light' or 'dark' for default theme
+            powerUps: { fiftyFifty: 0 },
+            currentCustomQuiz: [],
+            customQuizProgress: 0,
+            customQuizScore: 0,
+            incorrectAnswers: [],
+            currentStudentName: '',
+            currentQuizStandard: '',
+        };
+        let gameState = { ...DEFAULT_GAME_STATE };
+        let aiHelperTimeout;
+        let bugSquashInterval, simonGame, physicsEngine, memoryGame, pathfindingGame, whackAGemGame;
+        let cheatCodeInput = [];
+
+        // --- CONTENT ---
+        const content = {
+            core: [
+                { type: 'info', title: "Phase 1: Getting Started", text: "First, log in to your school account at www.gemini.google.com. Then, find the 'Tools' dropdown menu right below the main prompt window and select 'Canvas' to open the coding environment." },
+                { type: 'info', title: "The Master Prompt", text: "Now, begin writing your prompt. Be incredibly specific! The more detail, the better. A powerful 'skeleton' prompt that requests specific features is a great starting point." },
+                { type: 'madlibs-prompt-builder', title: "Build-A-Prompt", text: "A great prompt is specific. Fill in the blanks below to construct a powerful, detailed prompt that Gemini can understand." },
+                { type: 'info', title: "The Iteration Cycle", text: "Play the game and take notes on what you like and what needs changing. The AI works best with small, focused requests. Instead of saying 'change everything,' try 'change the button color to blue and make the font larger.'" },
+                { type: 'spot-the-bug', title: "Spot the Bug!", text: "Previewing your game is key to finding small issues. Can you spot the difference between the two components below? Click on the bug!" },
+                { type: 'quiz', text: "What is the most effective way to refine your game?", options: ["Asking for a complete rewrite", "Making one large, complex request", "Making several small, specific requests"], answer: 2 },
+                { type: 'info', title: "Final Polish", text: "Before you finish, use one final prompt to optimize your game. For example: 'Please review this code and ensure it is optimized for students on an iPad. Check for any bugs or errors.'" },
+                { type: 'bug-squash', title: "Bug Squashing!", text: "Time to clean up the code! Click on the bugs as they crawl across the screen to squash them. How many can you get before time runs out?"},
+                { type: 'infinite-loop', title: "Find the Infinite Loop", text: "Some bugs aren't visual. Read the code below and click on the line that will cause the program to crash by running forever." },
+                { type: 'info', title: "Phase 3: Sharing Your Game", text: "Ready to share? Click the 'Share' button in Canvas and then 'Copy Contents' to copy all the code to your clipboard." },
+                { type: 'info', title: "Create Your File", text: "On your computer, create a new folder for your game. Then, open a plain text editor like TextEdit (on Mac) or Notepad (on Windows). In your editor, create a new blank document." },
+                { type: 'info', title: "The Most Important Step!", text: "Before pasting, you MUST ensure your document is in 'Plain Text' format, not 'Rich Text'. In TextEdit, you do this from the menu: <b>Format > Make Plain Text</b>. This step is critical for the code to work." },
+                { type: 'quiz', text: "What format is essential for your code file to be in?", options: ["Rich Text Format", "Plain Text Format", "Document Format"], answer: 1 },
+                { type: 'info', title: "Paste, Name, and Save", text: "Paste the code you copied from Gemini into the plain text document. When you save, name the file exactly <b>index.html</b> and save it inside the folder you just created." },
+                { type: 'quiz', text: "What must the file be named for web servers to recognize it as the main page?", options: ["game.html", "index.html", "main.txt"], answer: 1 },
+                { type: 'info', title: "Final Save Check", text: "When saving from some text editors, you may need to uncheck a box that says 'If no extension is provided, use .txt'. Your file must end in '.html', not '.html.txt'. Now your game folder is ready!" },
+                { type: 'drag-game', title: "Practice the Final Step!", text: "Now, practice the final step. Drag the game folder from your desktop into the Netlify Drop zone to deploy it." },
+                { type: 'info', title: "You're Live!", text: "Netlify will instantly upload your folder and give you a live, shareable link to your game. Congratulations, you've published your first educational game!" }
+            ],
+            styling: [
+                { type: 'info', title: 'Advanced Styling', text: "Ask for specific fonts from Google Fonts. For example: 'Use the font \"Poppins\" for headers and \"Roboto\" for body text.' This adds a professional touch." },
+                { type: 'info', title: 'Mechanic 1: Interactive Style Editor', text: "<b>What is this?</b><br>This demonstrates how Gemini can build interactive tools that respond to user input in real-time. It's a core concept for creating any kind of customization or creator tool." },
+                { type: 'style-editor', title: 'Interactive Style Editor', text: 'See how different styles change a component in real-time. This demonstrates how Gemini can create interactive tools.'},
+                { type: 'info', title: 'Classroom Ideas: Style Editor', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Art/Design:</b> Create a 'Logo Maker' where students design a simple logo by choosing fonts, colors, and shapes.</li><li><b>Language Arts:</b> Build a 'Book Cover Designer' where students style a cover for a book they've read.</li><li><b>Computer Science:</b> Use it as a simple introduction to CSS properties and values.</li></ul>" },
+                { type: 'info', title: 'Mechanic 2: Generative Art', text: "<b>What is this?</b><br>This showcases Gemini's ability to use the HTML Canvas element to create dynamic, non-standard visuals with code. It's the foundation for drawing, charting, and more creative game graphics." },
+                { type: 'generative-art', title: 'Generative Art Creator', text: 'Gemini can even create artistic visuals using the HTML Canvas. Play with the sliders to create a unique piece of art!' },
+                { type: 'info', title: 'Classroom Ideas: Generative Art', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Math:</b> Create a 'Math Art' generator where sliders control variables in geometric formulas to create patterns (like Spirographs).</li><li><b>Science:</b> Build a simple 'Molecule Visualizer' that draws different chemical compounds on the canvas.</li><li><b>Art:</b> An open-ended tool for students to explore digital art and coding principles.</li></ul>" },
+                { type: 'info', title: 'Mechanic 3: CSS Animations', text: "<b>What is this?</b><br>Animations make your game feel alive! You can ask Gemini to add simple animations to elements to provide feedback, like making a button pulse or a badge shake. A simple prompt would be: 'Animate the gem counter to pulse briefly when gems are earned.'" },
+                { type: 'animation-showcase', title: 'Animation Showcase', text: 'Click the buttons below to see different animations in action. These small details add a lot of personality to your game.' },
+                { type: 'info', title: 'Classroom Ideas: Animations', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Feedback:</b> Make correct answers glow green and pulse, while incorrect answers shake from side to side.</li><li><b>Emphasis:</b> Have important instructions or new elements slide onto the screen to draw the player's attention.</li><li><b>Fun Factor:</b> Add a subtle 'bobbing' animation to player characters or collectibles to make the world feel more dynamic.</li></ul>" },
+                { type: 'info', title: 'Mechanic 4: Gradients & Glassmorphism', text: "<b>What is this?</b><br>This is a modern design trend that creates a beautiful 'frosted glass' look. You can ask Gemini for it directly: 'Apply a glassmorphism effect to the main container with a blue-to-purple gradient background.'" },
+                { type: 'glassmorphism-editor', title: 'Glassmorphism Editor', text: 'Experiment with gradients and blur effects to create your own "frosted glass" design. This is great for pop-up windows and containers.' },
+                { type: 'info', title: 'Classroom Ideas: Glassmorphism', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Modern UI:</b> Use this effect for your game's main menu or for pop-up modals (like a help screen or a 'Level Complete!' message) to give it a professional, layered look.</li><li><b>Focus:</b> When a pop-up appears, the blurry background helps the player focus on the content in the foreground.</li></ul>" },
+                { type: 'info', title: 'Mechanic 5: Box Shadows & Depth', text: "<b>What is this?</b><br>Box shadows are a simple but powerful way to create a sense of depth and make important elements feel like they are lifting off the page. You can ask: 'Add a subtle box shadow to all the buttons to make them pop.'" },
+                { type: 'box-shadow-editor', title: 'Box Shadow Editor', text: 'Create your own shadow effects. See how adjusting the offset, blur, and color can make an element look like it\'s floating!' },
+                { type: 'info', title: 'Classroom Ideas: Box Shadows', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Highlighting:</b> When a student hovers over a correct answer in a quiz, make its shadow larger to provide a satisfying visual cue.</li><li><b>Distinction:</b> Give draggable items a shadow to make them look like physical objects a player can pick up.</li><li><b>Design:</b> Let students design a digital card or poster and use shadows to create layers and a sense of depth in their composition.</li></ul>" }
+            ],
+            audio: [
+                { type: 'info', title: 'Adding Sound', text: "You can ask Gemini to use Tone.js for sound effects. Prompt: 'Add a fun \"boop\" sound using Tone.js when a user clicks the correct answer.'" },
+                { type: 'simon-game', title: 'Simon Says', text: "This classic memory game was built with Gemini and Tone.js. Follow the pattern of sounds and lights. Can you get a high score?" },
+                { type: 'info', title: 'Mechanic 2: Interactive Soundboard', text: "<b>What is this?</b><br>A soundboard is a great way to add a variety of sound effects to your game. You can ask Gemini to create buttons that play different sounds, like a 'success chime,' a 'wrong answer buzz,' or atmospheric sounds like 'rain falling.'" },
+                { type: 'soundboard', title: 'Soundboard', text: 'Click the buttons below to play different sound effects. This demonstrates how you can add a range of audio feedback to your games.' },
+                { type: 'info', title: 'Classroom Ideas: Soundboard', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Digital Storytelling:</b> Students can create stories and use a soundboard to add sound effects for different events or characters.</li><li><b>Language Learning:</b> Create a soundboard with buttons for different vocabulary words to help students with pronunciation.</li><li><b>Science:</b> Build an 'Animal Sound' identifier where students click a button to hear a sound and must guess the animal.</li></ul>" }
+            ],
+            mechanics: [
+                { type: 'info', title: 'Mechanic 1: The Physics Sandbox', text: "<b>What is this?</b><br>This mini-game shows how you can create a world that follows rules of physics, like gravity, bouncing, and collisions. Objects feel like they have weight and interact with each other realistically." },
+                { type: 'physics-sandbox', title: 'Physics Sandbox', text: 'Click anywhere in the box below to drop shapes and see the physics engine in action. This is the foundation for puzzle games, platformers, and more!' },
+                { type: 'info', title: 'Classroom Ideas: Physics', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Science:</b> Create a 'Simple Machines' game where students build Rube Goldberg-style contraptions to solve a puzzle.</li><li><b>Math:</b> Design an 'Angry Birds' style game to teach angles and projectile motion.</li><li><b>Language Arts:</b> Make a 'Word Avalanche' game where students catch falling letter blocks to spell vocabulary words.</li></ul>" },
+                { type: 'info', title: 'Mechanic 2: Pathfinding', text: "<b>What is this?</b><br>Pathfinding allows a game character to 'think' and find the shortest route between two points, automatically avoiding obstacles. It's like a mini-GPS for your game characters!" },
+                { type: 'pathfinding-maze', title: 'Pathfinding Algorithm', text: 'This demonstrates pathfinding, a core concept in puzzle and strategy games. Click a start point and an end point on the grid to see the algorithm find the shortest path.'},
+                { type: 'info', title: 'Classroom Ideas: Pathfinding', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>History/Geography:</b> Create a 'Trade Route' game on a map where the algorithm finds the most efficient path between cities, avoiding mountains.</li><li><b>Biology:</b> Make a 'Food Chain Maze' where a predator character intelligently hunts for its prey.</li><li><b>Any Game:</b> Use it as a 'Hint' system that shows a player the correct path if they get stuck in a puzzle.</li></ul>" },
+                { type: 'info', title: 'Mechanic 3: Memory Match', text: "<b>What is this?</b><br>This classic concentration game demonstrates how Gemini can handle core game logic: tracking player turns, remembering the state of different pieces (flipped or not), and checking for a win." },
+                { type: 'memory-match', title: 'Memory Match Game', text: 'A classic educational game. Match all the pairs! This showcases state management and user interaction logic.'},
+                { type: 'info', title: 'Classroom Ideas: Memory Match', text: "<b>How could you use this?</b> (This one is very versatile!)<br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Vocabulary:</b> Match a word to its definition, or a picture to its name.</li><li><b>Math:</b> Match an equation (e.g., '5 x 4') to its answer ('20').</li><li><b>History:</b> Match a historical figure to their major accomplishment, or a date to a significant event.</li></ul>" },
+                { type: 'info', title: 'Mechanic 4: Reaction Games', text: "<b>What is this?</b><br>This classic 'whack-a-mole' style game demonstrates how to create time-sensitive challenges. It relies on JavaScript timers to randomly show and hide elements, testing a player's reaction speed." },
+                { type: 'whack-a-gem', title: 'Whack-A-Gem!', text: 'Test your reflexes! Click on the gems as they pop up from the holes. Try to collect 10 gems before the time runs out.'},
+                { type: 'info', title: 'Classroom Ideas: Reaction Games', text: "<b>How could you use this?</b><br><ul class='list-disc list-inside mt-2 space-y-2'><li><b>Math Facts:</b> Have numbers pop up and ask students to only click on the even numbers, or multiples of 3.</li><li><b>Language Arts:</b> Display letters and have students 'whack' only the vowels or consonants.</li><li><b>Science:</b> In a chemistry lesson, ask students to click on the symbols for noble gases as they appear among other elements.</li></ul>" }
+            ]
+        };
+        
+        const shopItems = [
+             { id: 'powerup-fiftyFifty', name: '50/50 Power-up', cost: 30, description: "Removes two wrong answers from a quiz.", type: 'powerup' },
+             { id: 'theme-default', name: 'Default Theme', cost: 0, description: "The standard high-tech look. Supports light/dark mode.", type: 'theme' },
+             { id: 'cursor-pencil', name: 'Pencil Cursor', cost: 20, description: "For the creative ones.", type: 'cursor', value: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24\" fill=\"%23fef3c7\" stroke=\"%23333\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z\"></path></svg>'), auto" },
+             { id: 'cursor-crosshair', name: 'Target Cursor', cost: 25, description: "For pinpoint accuracy.", type: 'cursor', value: 'crosshair' },
+             { id: 'theme-chalkboard', name: 'Chalkboard Theme', cost: 50, description: "A classic classroom vibe.", type: 'theme' },
+             { id: 'theme-notebook', name: 'Notebook Theme', cost: 50, description: "A clean, old-school computer look.", type: 'theme' },
+             { id: 'theme-90s', name: '90s Throwback Theme', cost: 60, description: "A radical theme with bright colors and geometric patterns.", type: 'theme' },
+             { id: 'ai-gold', name: 'Gold Robot Skin', cost: 75, description: 'A shiny, premium look for your AI helper.', type: 'ai-skin' },
+        ];
+        
+        const masterPrompts = [
+            { title: "The All-in-One Game Prompt", description: "An excellent, feature-rich starting point for any classroom game.", prompt: "Create a fun, educational classroom game for [grade level] [subject] that teaches/reinforces/quizzes students on [lesson/topic], is responsive, accessible, saves progress, has a Help modal, instant feedback with badges, safe input validation, a Share button, light/dark mode toggle, and outputs everything in a single HTML file with CSS in <style> and JS in <script>." },
+            { title: "Platformer Game Base", description: "A great starting point for a side-scrolling educational game.", prompt: "Create a visually appealing, single-file HTML platformer game using Matter.js for physics. The player should be able to move left, right, and jump. The game should be easily customizable with new levels and educational questions that appear when the player reaches a checkpoint." },
+            { title: "Interactive Quiz Show", description: "Perfect for a classroom review session. Emulates a TV game show.", prompt: "Generate a single-file HTML quiz show game with a fun, flashy theme. Include CSS animations for questions appearing and disappearing. The game should support multiple players (taking turns on the same screen) and keep score. Use Firestore to save the high score leaderboard." },
+            { title: "Interactive Story/Decision Making", description: "For ELA or History. Students make choices that affect the outcome of a narrative.", prompt: "Create a single-file HTML interactive story game. The game should present the player with a block of text describing a scenario, followed by 2-3 choices presented as buttons. Clicking a choice should update the story text and present new choices. The story should be about [a young Roman citizen during the fall of Pompeii]. Include at least 5 different story branches and a simple way to restart the story." },
+            { title: "Drag-and-Drop Sorting Game", description: "A versatile tool for categorization lessons in any subject.", prompt: "Build a single-file HTML drag-and-drop sorting game. Create several draggable items (e.g., 'Apple', 'Carrot', 'Steak') and two or more category boxes (e.g., 'Fruit', 'Vegetable', 'Protein'). When an item is dragged into the correct category, it should snap into place. If dropped in the wrong category, it should return to its starting position. Provide visual feedback (a green glow for correct, a red shake for incorrect)." },
+            { title: "Simple Data Charting Tool", description: "For Math or Science classes. Students can input data to generate a visual chart.", prompt: "Generate a single-file HTML application that acts as a simple data visualization tool. It should have a user interface where a student can input labels and values. Upon clicking a 'Generate Chart' button, the application should display a responsive bar chart representing the data. Use only HTML and CSS for the chart, without external libraries. Allow the user to add up to 6 data points." },
+            { title: "Interactive Historical Timeline", description: "Perfect for history classes to visualize sequences of events.", prompt: "Create a single-file HTML interactive timeline. The timeline should be horizontal and scrollable on smaller screens. Key events should be represented by clickable points on the timeline. When a point is clicked, a modal window should pop up displaying more information and an image related to that event. The timeline should be about [the major events of the American Civil Rights Movement]." }
+        ];
+
+        const glossaryTerms = [
+            { term: "localStorage", definition: "A way to save small amounts of data directly in the user's web browser, allowing game progress to be saved even after the tab is closed." },
+            { term: "CSS Selector", definition: "A pattern used to select and style specific HTML elements on a page, like changing the color of all buttons." },
+            { term: "Matter.js", definition: "A popular JavaScript library that simulates 2D physics, including gravity, collisions, and bouncing." },
+            { term: "Tone.js", definition: "A JavaScript library for creating interactive music and sounds in the browser." },
+            { term: "Pathfinding", definition: "The process of finding the shortest route between two points while avoiding obstacles, often used for enemy AI or hint systems." },
+            { term: "Glassmorphism", definition: "A modern UI design trend that uses blur, transparency, and gradients to create a 'frosted glass' look." }
+        ];
+
+        const researchItems = [
+            {
+                quote: "Middle school learners benefited most from elements that emphasized collaboration, mastery challenges, and autonomy rather than simplistic reward systems like points or badges. These designs fostered increased motivation, persistence, and willingness to participate in reading tasks.",
+                citation: "Wang, Z., Harun, J., & Yuan, Y. (2024)"
+            },
+            {
+                quote: "Using digital games with gamification elements in middle school writing instruction can significantly enhance student engagement, creativity, and collaboration... The gamified environment also promoted peer interaction and group problem-solving, making classroom management easier and fostering a positive, motivating atmosphere.",
+                citation: "Bal, M. (2019)"
+            },
+            {
+                quote: "Serious games can enhance social interaction, teamwork, and emotional confidence among students while also presenting challenges such as peer distraction, frustration with complex tasks, and time constraints. The findings suggest that serious games are effective for engagement and skill development when carefully designed and implemented.",
+                citation: "Stewart, L. R. (2024)"
+            },
+            {
+                quote: "Integrating games such as puzzles and brain teasers into history instruction can enhance middle school students’ motivation, engagement, and visual processing skills, while promoting collaboration and the transfer of skills to real-world contexts.",
+                citation: "Zirawaga, Olusanya, & Maduku (2017)"
+            }
+        ];
+
+        const aiSkins = {
+            'ai-default': `<svg id="ai-robot-svg" class="w-24 h-24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="robot-body"><rect x="20" y="40" width="60" height="50" rx="10" fill="#7dd3fc"/><rect x="15" y="35" width="70" height="10" rx="5" fill="#0ea5e9"/><circle cx="50" cy="25" r="15" fill="#e0f2fe"/><circle cx="50" cy="25" r="10" fill="#0ea5e9"/><circle cx="50" cy="25" r="3" fill="#FFFFFF"/><rect x="47" y="5" width="6" height="10" rx="3" fill="#7dd3fc"/></g></svg>`,
+            'ai-gold': `<svg id="ai-robot-svg" class="w-24 h-24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><g class="robot-body"><rect x="20" y="40" width="60" height="50" rx="10" fill="#facc15"/><rect x="15" y="35" width="70" height="10" rx="5" fill="#eab308"/><circle cx="50" cy="25" r="15" fill="#fefce8"/><circle cx="50" cy="25" r="10" fill="#eab308"/><circle cx="50" cy="25" r="3" fill="#FFFFFF"/><rect x="47" y="5" width="6" height="10" rx="3" fill="#facc15"/></g></svg>`
+        };
+        const randomAiTips = ["Don't forget to be specific in your prompts!", "Regularly preview your game to catch bugs early.", "Using a database like Firestore can save player progress!", "Ask Gemini to 'make it visually appealing' for better results.", "Research by Stewart (2024) shows that educational games can enhance teamwork and emotional confidence!"];
+
+        // --- CORE LOGIC ---
+        function render() {
+            // Cleanup any active game loops
+            if (bugSquashInterval) clearInterval(bugSquashInterval);
+            if (simonGame) simonGame.stop();
+            if (physicsEngine) { physicsEngine.stop(); physicsEngine = null; }
+            if (memoryGame) memoryGame.stop();
+            if (pathfindingGame) pathfindingGame.stop();
+            if (whackAGemGame) whackAGemGame.stop();
+
+
+            applyVisuals();
+            elements.gameHeader.classList.toggle('hidden', gameState.view === 'home' || gameState.view === 'quiz-creator' || gameState.view === 'play-custom-quiz' || gameState.view === 'prompt-showcase');
+            elements.badgesSection.classList.toggle('hidden', gameState.view !== 'game');
+            const coreCompleted = gameState.completedPaths.includes('core');
+            buttons.openPromptsLibrary.classList.toggle('hidden', !coreCompleted);
+            
+            updateBadges();
+
+            if (gameState.view === 'home') renderHomeScreen();
+            else if (gameState.view === 'shop') renderShopScreen();
+            else if (gameState.view === 'game') renderGameScreen();
+            else if (gameState.view === 'quiz-creator') renderQuizCreatorScreen();
+            else if (gameState.view === 'enter-student-name') renderEnterStudentNameScreen();
+            else if (gameState.view === 'play-custom-quiz') renderCustomQuizScreen();
+            else if (gameState.view === 'quiz-report') renderQuizReportScreen();
+            else if (gameState.view === 'prompt-showcase') renderPromptShowcase();
+        }
+        
+        function initialize() {
+            // Switched to localStorage for portability
+            loadGameState();
+
+            buttons.openPromptsLibrary.addEventListener('click', () => renderLibrary('prompts'));
+            document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+                gameState.colorMode = gameState.colorMode === 'dark' ? 'light' : 'dark';
+                saveGameState();
+            });
+        }
+
+        // --- VIEWS ---
+        function createOptionsHTML(options, clickHandlerName, customIndex = -1) {
+             const clickFn = customIndex > -1 ? `window.${clickHandlerName}(${customIndex}, ${'${index}'})` : `window.${clickHandlerName}(${'${index}'})`;
+             return `<div class="grid grid-cols-1 gap-3 mt-4">${options.map((o, i) => `<button onclick="${clickFn.replace('${index}', i)}" class="w-full text-left bg-slate-700 hover:bg-sky-600 p-4 rounded-lg transition-colors text-lg">${o}</button>`).join('')}</div>`;
+        }
+
+        function renderHomeScreen() {
+             const paths = [
+                { id: 'core', name: 'Core Curriculum', description: 'Learn the essential steps from idea to deployment.', icon: '🚀' },
+                { id: 'mechanics', name: 'Advanced Game Mechanics', description: 'Explore physics and more complex interactions.', icon: '⚙️' },
+                { id: 'styling', name: 'Advanced Styling', description: 'Make your games look stunning with fonts and themes.', icon: '🎨' },
+                { id: 'audio', name: 'Adding Sound', description: 'Bring your game to life with sound effects.', icon: '🔊' }
+            ];
+             let pathsHTML = paths.map(p => {
+                const isCompleted = gameState.completedPaths.includes(p.id);
+                const progress = gameState.progress[p.id] || 0;
+                const totalSteps = content[p.id].length;
+                const progressPercent = totalSteps > 0 ? (progress / totalSteps) * 100 : 0;
+                const progressText = isCompleted ? '✔ Completed' : `${progress} / ${totalSteps} Steps`;
+                return `
+                    <button onclick="window.startPath('${p.id}')" class="text-left bg-slate-800/70 hover:bg-sky-800 p-6 rounded-lg transition-all transform hover:scale-105 border border-slate-700 w-full">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-2xl font-bold text-sky-300 flex items-center gap-3"><span>${p.icon}</span> ${p.name}</h3>
+                            <span class="text-sm ${isCompleted ? 'text-emerald-400' : 'text-slate-400'} font-semibold">${progressText}</span>
+                        </div>
+                        <p class="text-slate-400 mt-2">${p.description}</p>
+                        <div class="progress-bar-container mt-3">
+                            <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+            
+            let bottomContentHTML = '';
+            if (gameState.completedPaths.includes('core')) {
+                const guideSteps = content.core
+                    .filter(step => step.type === 'info' && step.title) 
+                    .map(step => {
+                        const cleanTitle = step.title.replace(/Phase \d: /g, '');
+                        return `<li class="space-y-1">
+                                    <strong class="text-sky-400">${cleanTitle}</strong>
+                                    <p class="text-slate-400 text-sm md:text-base">${step.text}</p>
+                                </li>`;
+                    }).join('');
+
+                bottomContentHTML = `
+                <div class="w-full max-w-4xl mx-auto mt-12 fade-in" style="animation-delay: 0.4s;">
+                    <h2 class="text-3xl font-bold mb-4">Quick Reference Guide</h2>
+                    <div class="space-y-4">
+                        <div class="card p-4 rounded-lg">
+                            <h4 class="text-2xl font-bold text-sky-300 mb-3">Guide: How to Make & Share a Game</h4>
+                            <ol class="list-decimal list-inside space-y-4 text-slate-300">
+                                ${guideSteps}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
+            elements.mainContent.innerHTML = `
+                <div class="text-center fade-in">
+                    <h1 class="text-6xl md:text-7xl font-black mb-4 tracking-tighter text-sky-400">Welcome, Educator!</h1>
+                    <p class="text-xl text-slate-400 mb-8 max-w-3xl mx-auto">Choose a learning path to begin your game development journey, or visit the Teacher's Lounge to customize your experience.</p>
+                </div>
+                <div class="w-full max-w-4xl mx-auto fade-in" style="animation-delay: 0.2s;">
+                    <h2 class="text-3xl font-bold mb-4">Learning Paths</h2>
+                    <div class="space-y-4">${pathsHTML}</div>
+                    <div class="flex justify-center items-center gap-4 mt-8">
+                        ${gameState.completedPaths.includes('core') ? `
+                        <button onclick="window.setView('quiz-creator')" class="primary-btn text-white font-bold py-3 px-8 rounded-lg text-xl transition-transform hover:scale-105 pop-in">
+                            <span class="mr-2">🛠️</span> Quiz Generator
+                        </button>
+                        ` : ''}
+                        ${gameState.completedPaths.includes('mechanics') ? `
+                        <button onclick="window.setView('prompt-showcase')" class="primary-btn text-white font-bold py-3 px-8 rounded-lg text-xl transition-transform hover:scale-105 pop-in">
+                            <span class="mr-2">✨</span> Prompt Showcase
+                        </button>
+                        ` : ''}
+                        <button onclick="window.enterShop()" class="primary-btn text-white font-bold py-3 px-8 rounded-lg text-xl transition-transform hover:scale-105">
+                            <span class="mr-2">🛍️</span> Teacher's Lounge
+                        </button>
+                    </div>
+                </div>
+                ${bottomContentHTML}
+            `;
+        }
+
+        function renderShopScreen() {
+            let shopHTML = shopItems.map(item => {
+                const isPurchased = gameState.purchasedItems.includes(item.id);
+                const isActive = (item.type === 'theme' && gameState.activeTheme === item.id) || (item.type === 'cursor' && gameState.activeCursor === item.id) || (item.type === 'ai-skin' && gameState.activeAiSkin === item.id);
+                let buttonHTML = `<button onclick="window.purchaseItem('${item.id}', ${item.cost})" class="primary-btn text-white font-bold py-2 px-4 rounded-lg w-full">${item.cost} 💎 Buy</button>`;
+                if (item.type === 'powerup') {
+                    buttonHTML = `<button onclick="window.purchaseItem('${item.id}', ${item.cost})" class="primary-btn text-white font-bold py-2 px-4 rounded-lg w-full">${item.cost} 💎 Buy (You have ${gameState.powerUps.fiftyFifty})</button>`;
+                } else if (isPurchased) {
+                    buttonHTML = `<button onclick="window.applyItem('${item.id}')" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg w-full" ${isActive ? 'disabled' : ''}>${isActive ? 'Active' : 'Apply'}</button>`;
+                } else if (gameState.gems < item.cost) {
+                     buttonHTML = `<button class="bg-slate-600 text-white/50 font-bold py-2 px-4 rounded-lg w-full" disabled>${item.cost} 💎</button>`;
+                }
+                return `<div class="card p-4 rounded-lg flex flex-col justify-between"><div><h4 class="text-lg font-bold">${item.name}</h4><p class="text-slate-400 text-sm mb-3">${item.description}</p></div>${buttonHTML}</div>`;
+            }).join('');
+
+            const allPathsCompleted = Object.keys(content).every(path => gameState.completedPaths.includes(path));
+            const unlockButtonHTML = !allPathsCompleted ? `
+                <div class="text-center mb-6 p-4 bg-slate-900/50 rounded-lg border border-red-500">
+                    <h4 class="text-lg font-bold text-amber-300">Feeling Impatient?</h4>
+                    <p class="text-slate-400 mb-3 text-sm">Instantly unlock all learning paths, items, and get 999 gems.</p>
+                    <button onclick="window.activateCheats()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-transform hover:scale-105 shadow-lg">
+                        Unlock All Features
+                    </button>
+                </div>
+            ` : '';
+
+            elements.mainContent.innerHTML = `
+                <div class="fade-in max-w-5xl mx-auto">
+                     <h2 class="text-4xl font-bold mb-6 text-center flex justify-center items-center gap-4">
+                         <span>Teacher's Lounge</span>
+                         <div class="flex items-center gap-2 text-2xl font-bold gem-text"><span>${gameState.gems}</span><span>💎</span></div>
+                     </h2>
+                    ${unlockButtonHTML}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${shopHTML}
+                    </div>
+                    <div class="text-center mt-8">
+                        <button onclick="window.setView('home')" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg text-lg">← Back to Home</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderQuizCreatorScreen() {
+            elements.mainContent.innerHTML = `
+                <div class="fade-in max-w-4xl mx-auto">
+                    <h1 class="text-4xl font-bold mb-6 text-center">Quiz Generator</h1>
+                    <div id="quiz-creator-content">
+                        <div class="space-y-6">
+                            <div class="card p-6 rounded-lg">
+                                <h3 class="text-2xl font-bold mb-4">Add a Question</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-bold mb-2">Question:</label>
+                                        <input type="text" id="quiz-question" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg" placeholder="Enter your question here...">
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2">Answer A:</label>
+                                            <input type="text" id="quiz-answer-0" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg">
+                                            <label class="flex items-center mt-1"><input type="radio" name="correct-answer" value="0" class="mr-2">Correct Answer</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2">Answer B:</label>
+                                            <input type="text" id="quiz-answer-1" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg">
+                                            <label class="flex items-center mt-1"><input type="radio" name="correct-answer" value="1" class="mr-2">Correct Answer</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2">Answer C:</label>
+                                            <input type="text" id="quiz-answer-2" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg">
+                                            <label class="flex items-center mt-1"><input type="radio" name="correct-answer" value="2" class="mr-2">Correct Answer</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2">Answer D:</label>
+                                            <input type="text" id="quiz-answer-3" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg">
+                                            <label class="flex items-center mt-1"><input type="radio" name="correct-answer" value="3" class="mr-2">Correct Answer</label>
+                                        </div>
+                                    </div>
+                                    <button onclick="window.addCustomQuestion()" class="primary-btn text-white font-bold py-2 px-6 rounded-lg w-full">Add Question</button>
+                                </div>
+                            </div>
+                            
+                            ${gameState.currentCustomQuiz.length > 0 ? `
+                            <div class="card p-6 rounded-lg">
+                                 <div>
+                                    <label class="block text-sm font-bold mb-2">Learning Standard (Optional):</label>
+                                    <input type="text" id="quiz-standard" value="${gameState.currentQuizStandard || ''}" oninput="window.updateQuizStandard(this.value)" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg" placeholder="e.g., CCSS.ELA-LITERACY.L.4.1">
+                                </div>
+                                <h3 class="text-2xl font-bold mb-4 mt-4">Your Questions (${gameState.currentCustomQuiz.length})</h3>
+                                <div class="space-y-3">
+                                    ${gameState.currentCustomQuiz.map((q, i) => `
+                                        <div class="bg-slate-800 p-4 rounded-lg">
+                                            <div class="flex justify-between items-center">
+                                                 <p class="font-bold flex-1">${i + 1}. ${q.text}<br><span class="text-sm text-slate-400 font-normal">Correct: ${q.options[q.answer]}</span></p>
+                                                 <button onclick="window.removeCustomQuestion(${i})" class="text-red-400 hover:text-red-300 ml-4">Remove</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="mt-4 flex gap-4">
+                                    <button onclick="window.clearCustomQuiz()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Clear All</button>
+                                    <button onclick="window.startCustomQuiz()" class="primary-btn text-white font-bold py-2 px-4 rounded-lg">Play Quiz</button>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="text-center mt-8">
+                        <button onclick="window.setView('home')" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg text-lg">← Back to Home</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEnterStudentNameScreen() {
+            elements.mainContent.innerHTML = `
+                <div class="fade-in max-w-lg mx-auto text-center">
+                    <div class="card p-8 rounded-lg">
+                        <h1 class="text-3xl font-bold mb-4">Ready to Play?</h1>
+                        <p class="text-slate-400 mb-6">Please enter the student's name for the report.</p>
+                        <div class="space-y-4">
+                             <div>
+                                <label for="student-name" class="sr-only">Student Name</label>
+                                <input type="text" id="student-name" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg text-center text-lg" placeholder="Enter name...">
+                            </div>
+                            <button onclick="window.beginQuizForStudent()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg w-full text-lg">Start Quiz</button>
+                        </div>
+                        <button onclick="window.setView('quiz-creator')" class="mt-4 text-slate-400 hover:text-white">← Back to Creator</button>
+                    </div>
+                </div>
+            `;
+            const studentNameInput = document.getElementById('student-name');
+            if(studentNameInput) studentNameInput.focus();
+        }
+        
+        function renderCustomQuizScreen() {
+            const currentQuestionIndex = gameState.customQuizProgress;
+            const question = gameState.currentCustomQuiz[currentQuestionIndex];
+            
+            if (!question) {
+                // Quiz completed, show report
+                gameState.view = 'quiz-report';
+                saveGameState();
+                return;
+            }
+            
+            elements.mainContent.innerHTML = `
+                <div class="fade-in max-w-4xl mx-auto">
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold">${gameState.currentStudentName}'s Quiz</h2>
+                            <span class="text-slate-400">Question ${currentQuestionIndex + 1} of ${gameState.currentCustomQuiz.length}</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: ${((currentQuestionIndex) / gameState.currentCustomQuiz.length) * 100}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 rounded-lg">
+                        <div class="mb-6">
+                            <h3 class="text-2xl font-bold">${question.text}</h3>
+                        </div>
+                        <div id="options-container">${createOptionsHTML(question.options, 'checkCustomAnswer', currentQuestionIndex)}</div>
+                        <div id="continue-btn-container" class="mt-6"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuizReportScreen() {
+            const total = gameState.currentCustomQuiz.length;
+            const score = gameState.customQuizScore;
+            const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
+
+            const incorrectHTML = gameState.incorrectAnswers.map(item => `
+                <div class="bg-slate-800/50 p-4 rounded-lg text-left">
+                    <p class="font-bold">${item.question.text}</p>
+                    <p class="text-sm mt-2 text-red-400">Your answer: ${item.question.options[item.selected]}</p>
+                    <p class="text-sm mt-1 text-emerald-400">Correct answer: ${item.question.options[item.question.answer]}</p>
+                </div>
+            `).join('');
+
+            elements.mainContent.innerHTML = `
+                 <div class="fade-in max-w-3xl mx-auto">
+                    <div class="card p-8 rounded-lg">
+                        <h1 class="text-4xl font-bold text-center mb-2">Quiz Report</h1>
+                        <p class="text-center text-slate-400 mb-6">For ${gameState.currentStudentName}</p>
+                        
+                        ${gameState.currentQuizStandard ? `<div class="mb-4 text-center"><p class="text-sm text-slate-500">Learning Standard</p><p class="font-semibold">${gameState.currentQuizStandard}</p></div>` : ''}
+
+                        <div class="text-center bg-slate-800/50 rounded-lg p-6 my-6">
+                            <p class="text-lg text-slate-300">Final Score</p>
+                            <p class="text-6xl font-black gem-text">${percentage}%</p>
+                            <p class="text-slate-400">(${score} out of ${total} correct)</p>
+                        </div>
+
+                        ${gameState.incorrectAnswers.length > 0 ? `
+                            <h3 class="text-2xl font-bold text-center mt-8 mb-4">Questions for Review</h3>
+                            <div class="space-y-3">${incorrectHTML}</div>
+                        ` : `
+                            <div class="text-center my-8">
+                                <p class="text-2xl font-bold text-emerald-400">🎉 Perfect Score! 🎉</p>
+                                <p class="text-slate-300">You answered every question correctly. Amazing work!</p>
+                            </div>
+                        `}
+
+                        <div class="flex justify-center gap-4 mt-8">
+                             <button onclick="window.restartCustomQuiz()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Take Again</button>
+                             <button onclick="window.setView('quiz-creator')" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg text-lg">Back to Creator</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGameScreen() {
+            const currentStepIndex = gameState.progress[gameState.currentPath];
+            const pathContent = content[gameState.currentPath];
+            const step = pathContent[currentStepIndex];
+            
+            if (!step) { // Path completed
+                if (!gameState.completedPaths.includes(gameState.currentPath)) {
+                    gameState.completedPaths.push(gameState.currentPath);
+                    const pathName = gameState.currentPath.charAt(0).toUpperCase() + gameState.currentPath.slice(1);
+                    earnBadge(`${pathName} Master`);
+                }
+                gameState.view = 'home';
+                saveGameState();
+                return;
+            }
+            
+            let contentHTML = '';
+            const headerHTML = `<h2 class="text-3xl font-bold text-sky-400 mb-1">${gameState.currentPath.charAt(0).toUpperCase() + gameState.currentPath.slice(1)} Path</h2><p class="text-slate-400 mb-6">Step ${currentStepIndex + 1} of ${pathContent.length}</p>`;
+            const backButton = `<button onclick="window.goBackInGame()" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg text-lg">← Back</button>`;
+            
+            switch(step.type) {
+                case 'info':
+                    const infoNav = `
+                        <div class="mt-8 flex justify-between items-center">
+                            ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Continue →</button>
+                        </div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-sky-300 mb-3">${step.title}</h3><div class="text-xl mb-6 bg-slate-900/50 p-4 rounded-lg">${step.text}</div>${infoNav}`;
+                    break;
+                case 'quiz':
+                    let powerUpBtn = gameState.powerUps.fiftyFifty > 0 ? `<button onclick="window.useFiftyFifty()" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-1 px-3 rounded-full text-sm">Use 50/50 (${gameState.powerUps.fiftyFifty})</button>` : '';
+                    const quizNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                    contentHTML = `<div class="flex justify-between items-center"><h3 class="text-2xl font-bold text-amber-300 mb-3">Knowledge Check!</h3>${powerUpBtn}</div><p class="text-xl mb-4 bg-slate-900/50 p-4 rounded-lg">${step.text}</p><div id="options-container">${createOptionsHTML(step.options, 'checkAnswer')}</div>${quizNav}`;
+                    break;
+                case 'madlibs-prompt-builder':
+                    const madlibsNav = `
+                        <div class="mt-6 flex justify-between items-center">
+                            ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <div id="continue-btn-container">
+                                <button id="build-prompt-btn" class="primary-btn text-white font-bold py-3 px-4 rounded-lg text-lg opacity-50" disabled>Build My Prompt!</button>
+                            </div>
+                        </div>`;
+                    contentHTML = `
+                        <h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3>
+                        <p class="text-xl mb-6">${step.text}</p>
+                        <div id="madlibs-container" class="bg-slate-900 p-6 rounded-lg text-xl space-y-4">
+                            <p>
+                                Create a 
+                                <select id="madlibs-grade" class="bg-slate-700 p-2 rounded mx-1"><option value="">[Grade Level]</option><option value="Kindergarten">Kindergarten</option><option value="5th Grade">5th Grade</option><option value="High School">High School</option></select>
+                                <select id="madlibs-subject" class="bg-slate-700 p-2 rounded mx-1"><option value="">[Subject]</option><option value="Math">Math</option><option value="Science">Science</option><option value="History">History</option></select>
+                                game that is
+                                <select id="madlibs-type" class="bg-slate-700 p-2 rounded mx-1"><option value="">[Game Type]</option><option value="a multiple-choice quiz">a multiple-choice quiz</option><option value="a matching game">a matching game</option><option value="a simple platformer">a simple platformer</option></select>
+                                about
+                                <select id="madlibs-topic" class="bg-slate-700 p-2 rounded mx-1"><option value="">[Topic]</option><option value="multiplication tables">multiplication tables</option><option value="the water cycle">the water cycle</option><option value="the American Revolution">the American Revolution</option></select>.
+                            </p>
+                        </div>
+                        <div id="generated-prompt-container" class="mt-4 hidden">
+                            <h4 class="font-bold text-sky-300">Generated Prompt:</h4>
+                            <pre id="generated-prompt" class="bg-slate-900 p-3 rounded text-sm whitespace-pre-wrap mt-2"></pre>
+                        </div>
+                        ${madlibsNav}
+                    `;
+                    break;
+                case 'spot-the-bug':
+                      const spotBugNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                      contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p><div class="grid grid-cols-2 gap-4 text-center items-center"><div><h4 class="font-bold mb-2">Correct Version</h4><div class="p-4 bg-slate-700 rounded-lg h-24 flex items-center justify-center"><button class="bg-blue-600 px-6 py-2 rounded-lg text-white">Submit</button></div></div><div><h4 class="font-bold mb-2">Buggy Version</h4><div id="buggy-container" class="p-4 bg-slate-700 rounded-lg h-24 cursor-pointer flex items-center justify-center"><button id="buggy-button" class="bg-red-500 px-6 py-2 rounded-lg text-white transform -rotate-12 translate-y-1">Submit</button></div></div></div>${spotBugNav}`;
+                    break;
+                 case 'bug-squash':
+                    const bugSquashNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p><div id="bug-squash-arena" class="relative w-full h-64 bg-slate-900 rounded-lg overflow-hidden border border-slate-700 p-2 font-mono text-xs text-green-400"><p>function calculateScore(player) {</p><p class="pl-4">if (player.hasPowerUp) {</p><p class="pl-8">return player.score * 2;</p><p class="pl-4">}</p><p>return player.score;</p><p>}</p></div><div id="bug-squash-ui" class="text-center mt-4"><p class="text-lg">Score: <span id="bug-score">0</span> | Time: <span id="bug-time">15</span></p></div>${bugSquashNav}`;
+                    break;
+                 case 'infinite-loop':
+                    const loopNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                    const codeLines = ["for (let i = 0; i < 5; i--) {", "  console.log('Gemini');", "}"];
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p><pre class="bg-slate-900 p-4 rounded-lg font-mono"><code>${codeLines.map((line, i) => `<span class="code-line-bug p-1 block rounded" data-line="${i}">${line}</span>`).join('')}</code></pre>${loopNav}`;
+                    break;
+                case 'style-editor':
+                    const styleNav = `
+                        <div class="mt-8 flex justify-between items-center">
+                             ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Looks Great, Continue! →</button>
+                        </div>`;
+                      contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-6">${step.text}</p><div class="flex flex-col md:flex-row gap-8"><div class="w-full md:w-1/2 flex items-center justify-center p-8 bg-slate-900 rounded-lg"><button id="style-preview-btn" class="px-8 py-4 text-lg font-bold transition-all duration-300">Sample Button</button></div><div class="w-full md:w-1/2 space-y-4"><div><label for="style-bg-color">Background Color</label><input type="color" id="style-bg-color" value="#0d9488" class="w-full h-10 p-1 bg-slate-700 border border-slate-600 rounded-lg"></div><div><label for="style-font">Font</label><select id="style-font" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg"><option value="'Inter', sans-serif">Inter</option><option value="'Poppins', sans-serif">Poppins</option><option value="'Press Start 2P', cursive">Pixel</option><option value="'Courier New', monospace">Courier</option></select></div><div><label for="style-border-radius">Border Radius: <span id="radius-value">8</span>px</label><input type="range" id="style-border-radius" min="0" max="24" value="8" class="w-full"></div></div></div>${styleNav}`;
+                    break;
+                case 'generative-art':
+                      const artNav = `
+                        <div class="mt-8 flex justify-between items-center">
+                             ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Very Cool, Continue! →</button>
+                        </div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-6">${step.text}</p><div class="flex flex-col md:flex-row gap-8"><div class="w-full md:w-2/3 flex items-center justify-center p-2 bg-slate-900 rounded-lg"><canvas id="art-canvas"></canvas></div><div class="w-full md:w-1/3 space-y-4"><div><label>Complexity: <span id="art-complexity-val">5</span></label><input type="range" id="art-complexity" min="1" max="10" value="5" class="w-full"></div><div><label>Size: <span id="art-size-val">20</span></label><input type="range" id="art-size" min="5" max="50" value="20" class="w-full"></div></div></div>${artNav}`;
+                    break;
+                case 'animation-showcase':
+                    const animNav = `
+                        <div class="mt-8 flex justify-between items-center">
+                            ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Continue →</button>
+                        </div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-6">${step.text}</p>
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <div class="w-full md:w-1/2 flex items-center justify-center p-8 bg-slate-900 rounded-lg h-48">
+                                <div id="animation-target" class="text-6xl transition-transform duration-500">🏆</div>
+                            </div>
+                            <div class="w-full md:w-1/2 grid grid-cols-2 gap-4">
+                                <button data-anim="animate-ping" class="anim-btn bg-slate-700 p-4 rounded-lg">Ping</button>
+                                <button data-anim="animate-pulse" class="anim-btn bg-slate-700 p-4 rounded-lg">Pulse</button>
+                                <button data-anim="animate-bounce" class="anim-btn bg-slate-700 p-4 rounded-lg">Bounce</button>
+                                <button data-anim="animate-spin" class="anim-btn bg-slate-700 p-4 rounded-lg">Spin</button>
+                            </div>
+                        </div>${animNav}`;
+                    break;
+                case 'glassmorphism-editor':
+                    const glassNav = `
+                        <div class="mt-8 flex justify-between items-center">
+                             ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Beautiful, Continue! →</button>
+                        </div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-6">${step.text}</p>
+                        <div class="flex flex-col md:flex-row gap-8">
+                            <div class="w-full md:w-2/3 flex items-center justify-center p-8 bg-cover bg-center rounded-lg" style="background-image: url('https://placehold.co/600x400/0f172a/38bdf8?text=Background')">
+                                 <div id="glass-preview" class="w-4/5 h-48 rounded-xl p-4 transition-all duration-300 flex items-center justify-center">
+                                     <p class="text-2xl font-bold text-white text-center">Glassmorphism</p>
+                                 </div>
+                            </div>
+                            <div class="w-full md:w-1/3 space-y-4">
+                                <div><label>From Color</label><input type="color" id="glass-color-from" value="#38bdf8" class="w-full h-10 p-1 bg-slate-700 border border-slate-600 rounded-lg"></div>
+                                <div><label>To Color</label><input type="color" id="glass-color-to" value="#818cf8" class="w-full h-10 p-1 bg-slate-700 border border-slate-600 rounded-lg"></div>
+                                <div><label>Blur: <span id="blur-value">8</span>px</label><input type="range" id="glass-blur" min="0" max="20" value="8" class="w-full"></div>
+                                <div><label>Opacity: <span id="opacity-value">30</span>%</label><input type="range" id="glass-opacity" min="10" max="80" value="30" class="w-full"></div>
+                            </div>
+                        </div>${glassNav}`;
+                    break;
+                case 'box-shadow-editor':
+                    const shadowNav = `
+                        <div class="mt-8 flex justify-between items-center">
+                             ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Impressive, Continue! →</button>
+                        </div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-6">${step.text}</p>
+                        <div class="flex flex-col md:flex-row gap-8">
+                            <div class="w-full md:w-2/3 flex items-center justify-center p-8 bg-slate-900 rounded-lg">
+                                 <div id="shadow-preview" class="w-48 h-32 bg-sky-600 rounded-xl transition-all duration-300 flex items-center justify-center text-white font-bold text-xl">Drag Me</div>
+                            </div>
+                            <div class="w-full md:w-1/3 space-y-4">
+                                <div><label>X Offset: <span id="shadow-x-val">4</span>px</label><input type="range" id="shadow-x" min="-20" max="20" value="4" class="w-full"></div>
+                                <div><label>Y Offset: <span id="shadow-y-val">4</span>px</label><input type="range" id="shadow-y" min="-20" max="20" value="4" class="w-full"></div>
+                                <div><label>Blur: <span id="shadow-blur-val">8</span>px</label><input type="range" id="shadow-blur" min="0" max="40" value="8" class="w-full"></div>
+                                <div><label>Color</label><input type="color" id="shadow-color" value="#000000" class="w-full h-10 p-1 bg-slate-700 border border-slate-600 rounded-lg"></div>
+                            </div>
+                        </div>${shadowNav}`;
+                    break;
+                case 'simon-game':
+                      const simonNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                      contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p><div class="bg-slate-900 p-4 rounded-lg"><div id="simon-ui" class="text-center mb-4"><p class="text-2xl font-bold">Score: <span id="simon-score">0</span></p><p id="simon-status" class="h-6"></p></div><div class="grid grid-cols-2 gap-4 w-64 h-64 mx-auto"><button data-index="0" class="simon-btn bg-green-500 rounded-tl-full"></button><button data-index="1" class="simon-btn bg-red-500 rounded-tr-full"></button><button data-index="2" class="simon-btn bg-yellow-500 rounded-bl-full"></button><button data-index="3" class="simon-btn bg-blue-500 rounded-br-full"></button></div><div class="text-center mt-4"><button id="simon-start-btn" class="primary-btn text-white font-bold py-2 px-6 rounded-lg">Start Game</button></div></div>${simonNav}`;
+                    break;
+                case 'soundboard':
+                    const soundboardNav = `
+                        <div class="mt-8 flex justify-between items-center">
+                            ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Continue →</button>
+                        </div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-6">${step.text}</p>
+                        <div id="soundboard-container" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                        ${soundboardNav}`;
+                    break;
+                case 'physics-sandbox':
+                      const physicsNav = `
+                        <div class="mt-6 flex justify-between items-center">
+                            ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Awesome, Continue! →</button>
+                        </div>`;
+                      contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p><div id="physics-container" class="w-full h-80 bg-slate-900 rounded-lg border border-slate-700"></div>${physicsNav}`;
+                    break;
+                case 'pathfinding-maze':
+                    const mazeNav = `
+                        <div class="mt-2 flex justify-between items-center">
+                            ${currentStepIndex > 0 ? backButton : '<div></div>'}
+                            <div id="continue-btn-container"></div>
+                        </div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p><div id="maze-container" class="w-full aspect-square max-w-md mx-auto grid grid-cols-10 gap-1 bg-slate-900 rounded-lg border border-slate-700 p-2"></div><div id="maze-status" class="text-center mt-4 h-6"></div>${mazeNav}`;
+                    break;
+                case 'memory-match':
+                      const memoryNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                      contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p><div id="memory-board" class="w-full max-w-md mx-auto grid grid-cols-4 gap-4"></div><div class="text-center mt-4 flex justify-around items-center text-xl font-bold h-8"><p id="memory-status"></p><p>Time: <span id="memory-time">60</span></p></div>${memoryNav}`;
+                    break;
+                case 'whack-a-gem':
+                    const whackNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-4">${step.text}</p>
+                        <div class="bg-slate-900 p-4 rounded-lg">
+                            <div id="whack-ui" class="text-center mb-4 flex justify-around items-center text-2xl font-bold">
+                                <p>Score: <span id="whack-score">0</span></p>
+                                <p>Time: <span id="whack-time">20</span></p>
+                            </div>
+                            <div id="whack-grid" class="w-full max-w-md mx-auto grid grid-cols-3 gap-4"></div>
+                        </div>${whackNav}`;
+                    break;
+                case 'drag-game':
+                    const dragNav = `<div class="mt-8 flex justify-between items-center">${currentStepIndex > 0 ? backButton : '<div></div>'}<div id="continue-btn-container"></div></div>`;
+                    contentHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-3">${step.title}</h3><p class="text-xl mb-6">${step.text}</p><div class="flex flex-col md:flex-row items-center justify-around gap-8"><div><p class="text-center mb-2 font-bold">Your Desktop</p><div id="draggable-folder" draggable="true" class="p-4 bg-sky-500 rounded-lg text-center text-black font-bold cursor-grab active:cursor-grabbing"><span class="text-4xl">📁</span><p>My-Game-Folder</p></div></div><div id="drop-zone" class="w-full md:w-1/2 h-48 rounded-lg flex items-center justify-center text-center p-4 border-2 border-dashed border-slate-600 transition-all"><p id="drop-zone-text" class="text-slate-400">Drag & Drop Folder Here</p></div></div>${dragNav}`;
+                    break;
+            }
+            
+            elements.mainContent.innerHTML = `<div class="fade-in max-w-4xl mx-auto">${headerHTML}${contentHTML}</div>`;
+            
+            // Setup listeners for interactive steps
+            if (step.type === 'madlibs-prompt-builder') setupMadLibsPromptBuilder();
+            if (step.type === 'spot-the-bug') setupSpotTheBug();
+            if (step.type === 'bug-squash') startBugSquashGame();
+            if (step.type === 'infinite-loop') setupInfiniteLoop();
+            if (step.type === 'style-editor') setupStyleEditor();
+            if (step.type === 'generative-art') setupGenerativeArt();
+            if (step.type === 'animation-showcase') setupAnimationShowcase();
+            if (step.type === 'glassmorphism-editor') setupGlassmorphismEditor();
+            if (step.type === 'box-shadow-editor') setupBoxShadowEditor();
+            if (step.type === 'simon-game') setupSimonGame();
+            if (step.type === 'soundboard') setupSoundboard();
+            if (step.type === 'physics-sandbox') setupPhysicsSandbox();
+            if (step.type === 'pathfinding-maze') setupPathfindingMaze();
+            if (step.type === 'memory-match') setupMemoryMatch();
+            if (step.type === 'whack-a-gem') setupWhackAGem();
+            if (step.type === 'drag-game') setupDragDropListeners();
+        }
+        
+        function renderPromptShowcase() {
+            const showcaseItems = [
+                {
+                    id: 'physics',
+                    name: 'Physics Sandbox',
+                    prompt: `Create a simple physics sandbox in a single HTML file using Matter.js. When the user clicks on the screen, drop a random shape (a box or a circle). Include ground and walls so the shapes don't fall off the screen.`,
+                    code: `const { Engine, Render, World, Bodies } = Matter;
+const container = document.getElementById('physics-container');
+const engine = Engine.create();
+const render = Render.create({ element: container, engine, options: { width: 500, height: 300, wireframes: false } });
+const ground = Bodies.rectangle(250, 300, 500, 60, { isStatic: true });
+World.add(engine.world, [ground]);
+container.addEventListener('click', () => {
+    const body = Math.random() > 0.5
+        ? Bodies.rectangle(event.offsetX, 0, 40, 40)
+        : Bodies.circle(event.offsetX, 0, 20);
+    World.add(engine.world, body);
+});
+Render.run(render);`,
+                },
+                {
+                    id: 'memory',
+                    name: 'Memory Match',
+                    prompt: `Create a 4x2 memory match game. The cards should flip over when clicked. If two cards match, they stay face up. If they don't match, they flip back over after a short delay. The game should end when all pairs are found.`,
+                    code: `const cards = document.querySelectorAll('.memory-card');
+let flippedCards = [];
+function flipCard(card) {
+    card.classList.add('flipped');
+    flippedCards.push(card);
+    if (flippedCards.length === 2) checkForMatch();
+}
+function checkForMatch() {
+    const [card1, card2] = flippedCards;
+    if (card1.dataset.symbol === card2.dataset.symbol) {
+        // Match found
+    } else {
+        setTimeout(() => { /* Flip back */ }, 1000);
+    }
+    flippedCards = [];
+}`,
+                },
+                {
+                    id: 'quiz',
+                    name: 'Simple Quiz',
+                    prompt: `Generate a single multiple-choice quiz question with four answers. When the user clicks an answer, indicate if it was correct or incorrect by changing the button color. Disable the buttons after an answer is chosen.`,
+                    code: `const options = document.querySelectorAll('.quiz-option');
+const correctAnswer = 'Paris';
+options.forEach(option => {
+    option.addEventListener('click', () => {
+        if (option.textContent === correctAnswer) {
+            option.classList.add('bg-green-500');
+        } else {
+            option.classList.add('bg-red-500');
+        }
+        options.forEach(b => b.disabled = true);
+    });
+});`,
+                },
+                {
+                    id: 'art',
+                    name: 'Generative Art',
+                    prompt: `Create an interactive art canvas. When the user moves their mouse over the canvas, draw a small, semi-transparent circle at the mouse's position with a random color. Do not clear the canvas on each frame.`,
+                    code: `const canvas = document.getElementById('art-canvas');
+const ctx = canvas.getContext('2d');
+canvas.addEventListener('mousemove', (e) => {
+    ctx.fillStyle = \`hsla(\${Math.random() * 360}, 70%, 50%, 0.5)\`;
+    ctx.beginPath();
+    ctx.arc(e.offsetX, e.offsetY, 15, 0, Math.PI * 2);
+    ctx.fill();
+});`,
+                },
+                {
+                    id: 'story',
+                    name: 'Interactive Story',
+                    prompt: `Create a simple 'choose your own adventure' story. Display a paragraph of text and two buttons with choices. When a choice is clicked, update the text to the next part of the story.`,
+                    code: `const storyText = document.getElementById('story-text');
+const choicesContainer = document.getElementById('choices');
+const story = {
+    start: {
+        text: 'You stand at a fork in the road.',
+        choices: [{ text: 'Go left', target: 'left_path' }, { text: 'Go right', target: 'right_path' }]
+    }, // ... more story parts
+};
+function showPart(partId) {
+    const part = story[partId];
+    storyText.textContent = part.text;
+    choicesContainer.innerHTML = part.choices.map(c => 
+        \`<button onclick="showPart('\${c.target}')">...\</button>\`
+    ).join('');
+}`,
+                },
+                {
+                    id: 'sorter',
+                    name: 'Drag & Drop',
+                    prompt: `Create a drag and drop sorting game. There should be two categories, 'Fruits' and 'Vegetables'. Provide a list of draggable items (apple, carrot, broccoli, banana). When an item is dropped into the correct category, it should stick. If dropped in the wrong one, it should return to the start.`,
+                    code: `const draggables = document.querySelectorAll('.draggable');
+const dropzones = document.querySelectorAll('.dropzone');
+draggables.forEach(item => {
+    item.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', item.id);
+    });
+});
+dropzones.forEach(zone => {
+    zone.addEventListener('dragover', e => {
+        e.preventDefault();
+    });
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text');
+        const draggableElement = document.getElementById(id);
+        if (zone.dataset.category === draggableElement.dataset.category) {
+            zone.appendChild(draggableElement);
+        }
+    });
+});`
+                },
+                 {
+                    id: 'chart',
+                    name: 'Bar Chart',
+                    prompt: "Create a simple, responsive bar chart from a given set of data using only HTML and CSS. The data is: { 'Apples': 4, 'Oranges': 7, 'Bananas': 5 }. The bars should be vertical, labeled, and have their value displayed.",
+                    code: `&lt;div class="w-full h-48 flex justify-around items-end gap-4 p-4 bg-slate-900 rounded-lg"&gt;
+    &lt;!-- Bar for Apples --&gt;
+    &lt;div class="flex flex-col-reverse items-center gap-1 w-1/4"&gt;
+        &lt;span class="text-sm"&gt;Apples&lt;/span&gt;
+        &lt;div class="w-full bg-emerald-600 text-center text-white font-bold rounded-t-md" style="height: 40%;"&gt;4&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;!-- Bar for Oranges --&gt;
+    &lt;div class="flex flex-col-reverse items-center gap-1 w-1/4"&gt;
+        &lt;span class="text-sm"&gt;Oranges&lt;/span&gt;
+        &lt;div class="w-full bg-emerald-600 text-center text-white font-bold rounded-t-md" style="height: 70%;"&gt;7&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;!-- Bar for Bananas --&gt;
+    &lt;div class="flex flex-col-reverse items-center gap-1 w-1/4"&gt;
+        &lt;span class="text-sm"&gt;Bananas&lt;/span&gt;
+        &lt;div class="w-full bg-emerald-600 text-center text-white font-bold rounded-t-md" style="height: 50%;"&gt;5&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;`,
+                },
+                {
+                    id: 'api',
+                    name: 'Data Fetcher',
+                    prompt: "Create a simple app that fetches data from a public API. It should have an input field for a country name and a button. When the button is clicked, use the `fetch` API to get data from `https://restcountries.com/v3.1/name/{country}` and display the country's capital city.",
+                    code: `const input = document.getElementById('country-input');
+const button = document.getElementById('fetch-btn');
+const resultEl = document.getElementById('result');
+
+button.addEventListener('click', async () => {
+    const country = input.value;
+    const response = await fetch(\`https://.../name/\${country}\`);
+    const data = await response.json();
+    resultEl.textContent = \`Capital: \${data[0].capital[0]}\`;
+});`,
+                }
+            ];
+
+            const tabsHTML = showcaseItems.map((item, index) => `
+                <button class="tab-btn py-2 px-4 text-lg font-semibold rounded-t-lg ${index === 0 ? 'active' : ''}" data-tab="${item.id}">
+                    ${item.name}
+                </button>
+            `).join('');
+
+            elements.mainContent.innerHTML = `
+                <div class="fade-in max-w-6xl mx-auto">
+                     <h1 class="text-6xl md:text-7xl font-black text-emerald-400 mb-2 tracking-tighter text-center">Prompt Showcase</h1>
+                     <p class="text-xl text-slate-400 mb-8 max-w-3xl mx-auto text-center">See how a clear prompt to Gemini translates directly into code and a working product. Click a tab to explore an example.</p>
+                    <div class="mb-6 border-b border-slate-700 flex justify-center flex-wrap">
+                        ${tabsHTML}
+                    </div>
+
+                    <div id="showcase-content">
+                        <!-- Active tab content will be rendered here -->
+                    </div>
+                     <div class="text-center mt-8">
+                        <button onclick="window.setView('home')" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg text-lg">← Back to Home</button>
+                    </div>
+                </div>
+            `;
+
+            const tabButtons = document.querySelectorAll('#main-content .tab-btn');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const tabId = button.dataset.tab;
+                    const item = showcaseItems.find(i => i.id === tabId);
+                    renderShowcaseContent(item);
+                });
+            });
+
+            // Render the first tab initially
+            renderShowcaseContent(showcaseItems[0]);
+        }
+
+        function renderShowcaseContent(item) {
+            const contentContainer = document.getElementById('showcase-content');
+            let previewHTML = '';
+
+            switch(item.id) {
+                case 'physics':
+                    previewHTML = `<div id="showcase-physics-container" class="w-full h-[350px] bg-slate-900 rounded-lg border border-slate-700 cursor-pointer"></div><p class="text-center text-sm text-slate-400 mt-2">Click inside the box above!</p>`;
+                    break;
+                case 'memory':
+                    const symbols = ['🚀', '🎨', '🔊', '⚙️'];
+                    const memoryCards = [...symbols, ...symbols].sort(() => 0.5 - Math.random()).map(symbol => `
+                        <div class="showcase-memory-card relative w-full aspect-square cursor-pointer" data-symbol="${symbol}" style="transform-style: preserve-3d;">
+                            <div class="absolute w-full h-full bg-sky-600 rounded-lg flex items-center justify-center" style="backface-visibility: hidden;"></div>
+                            <div class="absolute w-full h-full bg-slate-700 rounded-lg flex items-center justify-center text-4xl" style="transform: rotateY(180deg); backface-visibility: hidden;">${symbol}</div>
+                        </div>`).join('');
+                    previewHTML = `<div class="w-full max-w-sm mx-auto grid grid-cols-4 gap-2">${memoryCards}</div><p class="text-center text-sm text-slate-400 mt-2">Match the pairs!</p>`;
+                    break;
+                case 'quiz':
+                     previewHTML = `<div class="w-full max-w-md mx-auto space-y-2"><p class="text-xl text-center mb-4">What is the capital of France?</p><button class="quiz-option w-full bg-slate-700 p-3 rounded-lg">London</button><button class="quiz-option w-full bg-slate-700 p-3 rounded-lg">Paris</button><button class="quiz-option w-full bg-slate-700 p-3 rounded-lg">Berlin</button><button class="quiz-option w-full bg-slate-700 p-3 rounded-lg">Madrid</button></div>`;
+                    break;
+                case 'art':
+                    previewHTML = `<canvas id="showcase-art-canvas" class="w-full h-[350px] bg-slate-900 rounded-lg border border-slate-700 cursor-crosshair"></canvas><p class="text-center text-sm text-slate-400 mt-2">Move your mouse over the canvas!</p>`;
+                    break;
+                case 'story':
+                    previewHTML = `<div class="w-full max-w-md mx-auto text-center"><p id="story-text" class="text-xl mb-4 min-h-[50px]"></p><div id="story-choices" class="flex justify-center gap-4"></div></div>`;
+                    break;
+                case 'sorter':
+                    const items = [
+                        { id: 'item-apple', name: '🍎 Apple', category: 'fruit' },
+                        { id: 'item-carrot', name: '🥕 Carrot', category: 'vegetable' },
+                        { id: 'item-broccoli', name: '🥦 Broccoli', category: 'vegetable' },
+                        { id: 'item-banana', name: '🍌 Banana', category: 'fruit' }
+                    ];
+                    const itemsHTML = items.map(i => `<div id="${i.id}" draggable="true" data-category="${i.category}" class="draggable bg-slate-700 p-2 rounded cursor-grab active:cursor-grabbing">${i.name}</div>`).join('');
+                    previewHTML = `
+                        <div class="flex gap-4">
+                            <div class="w-1/2">
+                                <h4 class="font-bold text-center mb-2">Fruits</h4>
+                                <div class="dropzone h-48 bg-slate-800 rounded-lg p-2 border-2 border-dashed border-slate-600" data-category="fruit"></div>
+                            </div>
+                            <div class="w-1/2">
+                                <h4 class="font-bold text-center mb-2">Vegetables</h4>
+                                <div class="dropzone h-48 bg-slate-800 rounded-lg p-2 border-2 border-dashed border-slate-600" data-category="vegetable"></div>
+                            </div>
+                        </div>
+                        <div id="drag-items-start" class="flex gap-2 mt-4 p-2 bg-slate-900 rounded-lg min-h-[50px]">${itemsHTML}</div>
+                        <div class="text-center">
+                             <p class="text-sm text-slate-400 mt-2">Drag items to the correct category.</p>
+                             <p class="text-xs text-sky-400 mt-1">(On iPad/touch, tap an item to select it, then tap a category to place it.)</p>
+                        </div>`;
+                    break;
+                case 'chart':
+                    const chartData = [{ label: 'Apples', value: 40 }, { label: 'Oranges', value: 70 }, { label: 'Bananas', value: 50 }];
+                    const chartHTML = chartData.map(d => `
+                        <div class="flex flex-col-reverse items-center gap-1 w-1/4">
+                             <span class="text-sm">${d.label}</span>
+                             <div class="w-full bg-emerald-600 text-center text-white font-bold rounded-t-md" style="height: ${d.value}%;">${d.value/10}</div>
+                        </div>
+                    `).join('');
+                    previewHTML = `<div class="w-full h-48 flex justify-around items-end gap-4 p-4 bg-slate-900 rounded-lg">${chartHTML}</div>`;
+                    break;
+                 case 'api':
+                    previewHTML = `
+                        <div class="w-full max-w-md mx-auto text-center space-y-4">
+                             <h4 class="text-xl">Find a Country's Capital</h4>
+                             <div class="flex gap-2">
+                                <input type="text" id="country-input" class="w-full bg-slate-700 p-2 rounded-lg" placeholder="e.g., Germany">
+                                <button id="fetch-btn" class="primary-btn text-white font-bold py-2 px-4 rounded-lg">Fetch</button>
+                             </div>
+                             <div id="api-result" class="min-h-[50px] bg-slate-900 p-3 rounded-lg flex items-center justify-center">
+                                <p class="text-slate-400">Result will appear here...</p>
+                             </div>
+                        </div>`;
+                    break;
+            }
+
+            contentContainer.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-2xl font-bold text-sky-300 mb-3">1. The Teacher's Prompt</h3>
+                            <div class="card p-4 rounded-lg">
+                                <pre class="bg-slate-900 p-3 rounded text-sm whitespace-pre-wrap">${item.prompt}</pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-sky-300 mb-3">2. Gemini's Generated Code</h3>
+                            <div class="card p-4 rounded-lg">
+                                 <pre class="bg-slate-900 p-3 rounded text-sm whitespace-pre-wrap max-h-60 overflow-y-auto"><code>${item.code}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-sky-300 mb-3">3. The Live Result</h3>
+                        <div class="card p-4 rounded-lg">
+                            ${previewHTML}
+                        </div>
+                    </div>
+                </div>`;
+            
+            // Activate the JS for the specific preview
+            switch(item.id) {
+                case 'physics': setupShowcasePhysics(); break;
+                case 'memory': setupShowcaseMemory(); break;
+                case 'quiz': setupShowcaseQuiz(); break;
+                case 'art': setupShowcaseArt(); break;
+                case 'story': setupShowcaseStory(); break;
+                case 'sorter': setupShowcaseSorter(); break;
+                case 'chart': setupShowcaseChart(); break;
+                case 'api': setupShowcaseApi(); break;
+            }
+        }
+
+        function renderLibrary(type) {
+            let contentHTML = '';
+            let title = '';
+
+            switch(type) {
+                case 'prompts':
+                    title = 'Master Prompts Library';
+                    contentHTML = masterPrompts.map(p => `
+                        <div class="card p-4 rounded-lg">
+                            <h4 class="text-xl font-bold text-sky-300">${p.title}</h4>
+                            <p class="text-slate-400 mb-3">${p.description}</p>
+                            <pre class="bg-slate-900 p-3 rounded text-sm whitespace-pre-wrap mb-3">${p.prompt}</pre>
+                            <button onclick="window.copyToClipboard(\`${p.prompt}\`)" class="primary-btn text-white font-bold py-2 px-4 rounded-lg w-full md:w-auto">Copy Prompt</button>
+                        </div>
+                    `).join('');
+                    break;
+            }
+            
+            elements.libraryTitle.textContent = title;
+            elements.libraryContent.innerHTML = contentHTML;
+            elements.libraryModal.classList.remove('hidden');
+        }
+        
+        // --- HELPERS & GAME LOGIC ---
+        function showContinueButton() {
+            const container = document.getElementById('continue-btn-container');
+            if (container) {
+                container.innerHTML = `<button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Continue →</button>`;
+            }
+        }
+
+        function updateBadges() {
+            elements.badgesContainer.innerHTML = gameState.badges.map(b => `<span class="bg-amber-500 text-black text-sm font-bold px-3 py-1 rounded-full">${b}</span>`).join('');
+        }
+
+        function showNotification(type, message, options = {}) {
+            const iconContainer = elements.notificationModal.querySelector('#notification-icon');
+            const msgEl = elements.notificationModal.querySelector('#notification-message');
+            const shareBtnContainer = document.getElementById('notification-share-btn-container');
+            
+            msgEl.innerHTML = message; // Use innerHTML to allow for bolding or other tags
+            const icons = {
+                success: { svg: '<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>', color: 'bg-emerald-500/20' },
+                error: { svg: '<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>', color: 'bg-red-500/20' },
+            };
+            iconContainer.innerHTML = icons[type].svg;
+            iconContainer.className = `mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full ${icons[type].color}`;
+            
+            if (options.showShare && navigator.share) {
+                shareBtnContainer.innerHTML = `<button id="share-progress-btn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-lg w-full">Share Progress</button>`;
+                document.getElementById('share-progress-btn').onclick = () => shareGame(options.shareText);
+            } else {
+                shareBtnContainer.innerHTML = '';
+            }
+
+            elements.notificationModal.classList.remove('hidden');
+            elements.notificationModal.classList.add('flex');
+        }
+
+        function showConfirm(title, message, onConfirm) {
+            elements.confirmModal.querySelector('#confirm-title').textContent = title;
+            elements.confirmModal.querySelector('#confirm-message').textContent = message;
+            
+            // Clone and replace the OK button to remove old event listeners
+            const oldOkBtn = buttons.confirmOk;
+            const newOkBtn = oldOkBtn.cloneNode(true);
+            oldOkBtn.parentNode.replaceChild(newOkBtn, oldOkBtn);
+            buttons.confirmOk = newOkBtn;
+
+            buttons.confirmOk.onclick = () => {
+                onConfirm();
+                elements.confirmModal.classList.add('hidden');
+            };
+
+            elements.confirmModal.classList.remove('hidden');
+            elements.confirmModal.classList.add('flex');
+        }
+
+        function shareGame(text) {
+             if (navigator.share) {
+                navigator.share({
+                    title: 'Gamify Your Curriculum Progress!',
+                    text: text,
+                }).catch(console.error);
+            }
+        }
+        
+        window.setView = (viewName) => {
+            gameState.view = viewName;
+            saveGameState();
+        };
+        window.clearCustomQuiz = () => {
+            gameState.currentCustomQuiz = [];
+            gameState.currentQuizStandard = '';
+            saveGameState();
+        };
+        window.startCustomQuiz = () => {
+            if (gameState.currentCustomQuiz.length < 1) {
+                showNotification('error', "Your quiz is empty! Please add at least one question before playing.");
+                return;
+            }
+            gameState.customQuizProgress = 0;
+            gameState.customQuizScore = 0;
+            gameState.incorrectAnswers = [];
+            gameState.view = 'enter-student-name';
+            saveGameState();
+        };
+        window.beginQuizForStudent = () => {
+            const nameInput = document.getElementById('student-name');
+            if (nameInput && nameInput.value.trim()) {
+                gameState.currentStudentName = nameInput.value.trim();
+                gameState.view = 'play-custom-quiz';
+                saveGameState();
+            } else {
+                showNotification('error', "Please enter the student's name to begin.");
+            }
+        };
+        window.restartCustomQuiz = () => {
+            gameState.customQuizProgress = 0;
+            gameState.customQuizScore = 0;
+            gameState.incorrectAnswers = [];
+            gameState.view = 'enter-student-name';
+            saveGameState();
+        };
+        window.retryBugSquash = () => {
+            render(); // This will re-run the setup function for the current step.
+        };
+        window.enterShop = () => {
+            gameState.view = 'shop';
+            saveGameState();
+        };
+        window.addCustomQuestion = () => {
+            const questionText = document.getElementById('quiz-question').value.trim();
+            const options = [
+                document.getElementById('quiz-answer-0').value.trim(),
+                document.getElementById('quiz-answer-1').value.trim(),
+                document.getElementById('quiz-answer-2').value.trim(),
+                document.getElementById('quiz-answer-3').value.trim(),
+            ];
+            const correctAnswerRadio = document.querySelector('input[name="correct-answer"]:checked');
+
+            if (!questionText || options.some(opt => opt === '') || !correctAnswerRadio) {
+                showNotification('error', 'Please fill out the question, all four answers, and select the correct answer.');
+                return;
+            }
+
+            const newQuestion = {
+                text: questionText,
+                options: options,
+                answer: parseInt(correctAnswerRadio.value),
+            };
+
+            gameState.currentCustomQuiz.push(newQuestion);
+            // Clear fields after adding
+            document.getElementById('quiz-question').value = '';
+            options.forEach((_, i) => document.getElementById(`quiz-answer-${i}`).value = '');
+            if(correctAnswerRadio) correctAnswerRadio.checked = false;
+            
+            saveGameState();
+        };
+        window.removeCustomQuestion = (index) => {
+            gameState.currentCustomQuiz.splice(index, 1);
+            saveGameState();
+        };
+        window.checkCustomAnswer = (questionIndex, selectedIndex) => {
+            const question = gameState.currentCustomQuiz[questionIndex];
+            const options = document.querySelectorAll('#options-container button');
+            
+            options.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === question.answer) {
+                    btn.classList.add('bg-emerald-600', 'border-emerald-400');
+                } else if (i === selectedIndex) {
+                    btn.classList.add('bg-red-600', 'border-red-400');
+                }
+            });
+            
+            if (selectedIndex === question.answer) {
+                gameState.customQuizScore++;
+                showAiHelper("Correct! Well done.");
+            } else {
+                gameState.incorrectAnswers.push({ question, selected: selectedIndex });
+                showAiHelper("That's not the right one, but that's okay! The correct answer is marked.");
+            }
+            
+            document.getElementById('continue-btn-container').innerHTML = `<button onclick="window.progressInCustomQuiz()" class="primary-btn text-white font-bold py-3 px-6 rounded-lg text-lg">Next Question →</button>`;
+            
+            // Save non-rendering state changes
+            localStorage.setItem('gamifyCurriculumState', JSON.stringify(gameState));
+        };
+        window.progressInCustomQuiz = () => {
+            gameState.customQuizProgress++;
+            saveGameState();
+        };
+        window.updateQuizStandard = (value) => {
+            gameState.currentQuizStandard = value;
+            localStorage.setItem('gamifyCurriculumState', JSON.stringify(gameState)); // Save without re-render
+        };
+        window.progressInGame = () => { gameState.progress[gameState.currentPath]++; saveGameState(); };
+        window.goBackInGame = () => {
+            if (gameState.progress[gameState.currentPath] > 0) {
+                gameState.progress[gameState.currentPath]--;
+                saveGameState();
+            }
+        };
+
+        window.startPath = (pathId) => {
+            const path = content[pathId];
+            if (path) {
+                const progress = gameState.progress[pathId] || 0;
+                // If the path has been completed (progress is at the end), reset progress to 0 to allow replay.
+                if (progress >= path.length) {
+                    gameState.progress[pathId] = 0;
+                }
+            }
+
+            gameState.currentPath = pathId;
+            gameState.view = 'game';
+            saveGameState();
+        };
+
+        window.checkAnswer = (selectedIndex) => {
+            const currentStep = content[gameState.currentPath][gameState.progress[gameState.currentPath]];
+            const options = document.querySelectorAll('#options-container button');
+            
+            if (selectedIndex === currentStep.answer) {
+                showAiHelper("That's correct! Great job.");
+                animateGems(10);
+                showContinueButton();
+                // Highlight correct answer and disable all
+                options.forEach((btn, i) => {
+                    btn.disabled = true;
+                    if (i === selectedIndex) {
+                        btn.classList.add('bg-emerald-600');
+                    }
+                });
+            } else {
+                showAiHelper("Not quite. Take a moment to re-read and try again.");
+                options[selectedIndex].classList.add('bg-red-600');
+                options[selectedIndex].disabled = true; // Only disable the wrong one
+            }
+        };
+
+        window.useFiftyFifty = () => {
+            if (gameState.powerUps.fiftyFifty < 1) return;
+            
+            const currentStep = content[gameState.currentPath][gameState.progress[gameState.currentPath]];
+            const correctAnswer = currentStep.answer;
+            const options = document.querySelectorAll('#options-container button');
+
+            const wrongIndices = [];
+            options.forEach((_, i) => {
+                if (i !== correctAnswer) wrongIndices.push(i);
+            });
+
+            // Shuffle and pick two to disable
+            wrongIndices.sort(() => 0.5 - Math.random());
+            
+            options[wrongIndices[0]].disabled = true;
+            options[wrongIndices[0]].classList.add('opacity-50', 'pointer-events-none');
+            options[wrongIndices[1]].disabled = true;
+            options[wrongIndices[1]].classList.add('opacity-50', 'pointer-events-none');
+            
+            // This powerup is used, so we decrement it.
+            gameState.powerUps.fiftyFifty--;
+
+            // To update the UI without a full re-render, we just save the state for power-ups
+            localStorage.setItem('gamifyCurriculumState', JSON.stringify(gameState));
+            
+            // Re-render only the game screen to update the button display
+            const continueContainer = document.getElementById('continue-btn-container').innerHTML;
+            renderGameScreen();
+            document.getElementById('continue-btn-container').innerHTML = continueContainer;
+        };
+
+        window.generateQuizWithAI = generateQuizWithAI;
+        
+
+        window.adaptContentAndGenerateQuiz = async () => {
+            const content = document.getElementById('ai-content-text').value.trim();
+            const gradeLevel = document.getElementById('ai-content-grade').value;
+            const btn = document.getElementById('ai-adapt-btn');
+            const loadingIndicator = document.getElementById('ai-adapt-loading');
+
+            if (!content) {
+                showNotification('error', 'Please paste in some content to adapt.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            loadingIndicator.classList.remove('hidden');
+
+             const userQuery = `First, review the following text and simplify its language and concepts for a ${gradeLevel} audience. The simplified text should not be a direct response. After simplifying, generate 3-5 multiple-choice questions based *only* on the information present in the text. For each question, provide 4 options and the zero-based index of the correct answer. Here is the text: "${content}"`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            simplifiedText: { type: "STRING", description: "The simplified version of the provided content." },
+                            questions: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        text: { type: "STRING" },
+                                        options: { type: "ARRAY", items: { type: "STRING" } },
+                                        answer: { type: "NUMBER" }
+                                    },
+                                    required: ["text", "options", "answer"]
+                                }
+                            }
+                        },
+                        required: ["simplifiedText", "questions"]
+                    }
+                }
+            };
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (jsonText) {
+                    const adaptedContent = JSON.parse(jsonText);
+                    const validQuestions = adaptedContent.questions.filter(q => q.text && Array.isArray(q.options) && q.options.length === 4 && typeof q.answer === 'number');
+                    
+                    gameState.currentCustomQuiz.push(...validQuestions);
+                    saveGameState();
+                    showNotification('success', `Content adapted and ${validQuestions.length} questions were added to your quiz! Check the 'Manual Entry' tab.`);
+                    renderQuizCreatorTabs('manual');
+                } else {
+                    throw new Error("No content received from AI.");
+                }
+            } catch(error) {
+                 console.error("AI Content Adaptation Error:", error);
+                showNotification('error', 'The AI was unable to adapt the content. Please check your connection or try different text.');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+
+        // --- MINI-GAME SETUP FUNCTIONS ---
+        function setupMadLibsPromptBuilder() {
+            const selects = document.querySelectorAll('#madlibs-container select');
+            const buildBtn = document.getElementById('build-prompt-btn');
+            
+            function checkCompletion() {
+                const allSelected = [...selects].every(s => s.value !== "");
+                if (allSelected) {
+                    buildBtn.disabled = false;
+                    buildBtn.classList.remove('opacity-50');
+                } else {
+                    buildBtn.disabled = true;
+                    buildBtn.classList.add('opacity-50');
+                }
+            }
+
+            selects.forEach(s => s.addEventListener('change', checkCompletion));
+
+            buildBtn.addEventListener('click', () => {
+                if (buildBtn.disabled) return;
+                const promptContainer = document.getElementById('generated-prompt-container');
+                const promptPre = document.getElementById('generated-prompt');
+                const grade = document.getElementById('madlibs-grade').value;
+                const subject = document.getElementById('madlibs-subject').value;
+                const type = document.getElementById('madlibs-type').value;
+                const topic = document.getElementById('madlibs-topic').value;
+
+                const fullPrompt = `Create a ${grade} ${subject} game that is ${type} about ${topic}. The game should be fun, educational, responsive, and output in a single HTML file.`;
+
+                promptPre.textContent = fullPrompt;
+                promptContainer.classList.remove('hidden');
+                
+                showAiHelper("See how specific that is? A prompt like this gives the AI a clear goal!");
+                animateGems(20);
+                earnBadge("Prompt Architect");
+                showContinueButton();
+                buildBtn.style.display = 'none';
+            });
+        }
+        
+        function setupSpotTheBug() {
+            const buggyContainer = document.getElementById('buggy-container');
+            if (buggyContainer) {
+                buggyContainer.addEventListener('click', () => {
+                    buggyContainer.style.outline = '3px solid #34d399'; // emerald-400
+                    buggyContainer.style.cursor = 'default';
+                    showAiHelper("You found it! Small visual bugs can make an application feel unprofessional. Good eye!");
+                    animateGems(15);
+                    earnBadge('Bug Spotter');
+                    showContinueButton();
+                }, { once: true });
+            }
+        }
+
+        function startBugSquashGame() {
+            const arena = document.getElementById('bug-squash-arena');
+            const scoreEl = document.getElementById('bug-score');
+            const timeEl = document.getElementById('bug-time');
+            if (!arena || !scoreEl || !timeEl) return;
+            let score = 0;
+            let time = 15;
+
+            // Event Delegation for clicking bugs is more reliable
+            const handleArenaClick = (e) => {
+                if (e.target.classList.contains('bug') && !e.target.classList.contains('bug-squashed')) {
+                    const bug = e.target;
+                    bug.classList.add('bug-squashed');
+                    score++;
+                    updateUI();
+                    setTimeout(() => bug.remove(), 400);
+                }
+            };
+            arena.addEventListener('click', handleArenaClick);
+
+            const updateUI = () => {
+                scoreEl.textContent = score;
+                timeEl.textContent = time;
+            };
+            updateUI();
+
+            const spawnBug = () => {
+                if (time <= 0) return;
+                const bug = document.createElement('div');
+                bug.textContent = '🐜';
+                bug.className = 'bug absolute text-2xl cursor-pointer';
+                bug.style.top = `${Math.random() * 85}%`;
+                const duration = Math.random() * 2 + 3; // 3-5 seconds to cross
+                bug.style.animationDuration = `${duration}s`;
+                
+                arena.appendChild(bug);
+                setTimeout(() => { if (bug) bug.remove() }, duration * 1000);
+            };
+            
+            bugSquashInterval = setInterval(() => {
+                time--;
+                updateUI();
+                if (time <= 0) {
+                    clearInterval(bugSquashInterval);
+                    bugSquashInterval = null;
+                    arena.removeEventListener('click', handleArenaClick); // Cleanup
+                    
+                    // Add a game over overlay instead of clearing content
+                    const gameOverOverlay = document.createElement('div');
+                    gameOverOverlay.className = "absolute inset-0 w-full h-full flex items-center justify-center text-2xl font-bold bg-slate-900/80";
+                    gameOverOverlay.textContent = "Time's up!";
+                    arena.appendChild(gameOverOverlay);
+
+                    showAiHelper(`You squashed ${score} bugs! Keeping code clean is a constant battle.`);
+                    if(score > 0) {
+                        animateGems(score * 2);
+                        earnBadge('Bug Squasher');
+                    }
+                    const continueContainer = document.getElementById('continue-btn-container');
+                    if (continueContainer) {
+                         continueContainer.innerHTML = `<button onclick="window.retryBugSquash()" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg">Try Again</button>
+                                                   <button onclick="window.progressInGame()" class="primary-btn text-white font-bold py-2 px-4 rounded-lg ml-2">Continue</button>`;
+                    }
+                }
+            }, 1000);
+
+            const spawnLoop = () => {
+                if (time > 0) {
+                    spawnBug();
+                    // Spawn rate increased 3x
+                    setTimeout(spawnLoop, Math.random() * 400 + 150); 
+                }
+            };
+            spawnLoop();
+        }
+        
+        function setupInfiniteLoop() {
+            const codeLines = document.querySelectorAll('.code-line-bug');
+            codeLines.forEach(line => {
+                line.addEventListener('click', (e) => {
+                    const selectedLine = e.currentTarget;
+                    const lineIndex = parseInt(selectedLine.dataset.line);
+
+                    codeLines.forEach(l => l.style.pointerEvents = 'none'); 
+
+                    if (lineIndex === 0) { 
+                        selectedLine.classList.add('bg-emerald-500/30', 'rounded');
+                        showAiHelper("That's the one! 'i--' would make the loop run forever. These bugs can be tricky to find.");
+                        animateGems(20);
+                        earnBadge('Loop Detective');
+                        showContinueButton();
+                    } else {
+                        selectedLine.classList.add('bg-red-500/30', 'rounded');
+                        showAiHelper("Not quite. That line is okay. Look for the part that controls how many times the loop runs.");
+                        setTimeout(() => {
+                            codeLines.forEach(l => l.style.pointerEvents = 'auto');
+                            selectedLine.classList.remove('bg-red-500/30', 'rounded');
+                        }, 1500);
+                    }
+                });
+            });
+        }
+        
+        function setupStyleEditor() {
+            showAiHelper("Research from Bal (2019) found that gamified environments can significantly enhance student engagement and creativity. Let's see it in action!", 6000);
+            const previewBtn = document.getElementById('style-preview-btn');
+            const bgColorInput = document.getElementById('style-bg-color');
+            const fontSelect = document.getElementById('style-font');
+            const radiusSlider = document.getElementById('style-border-radius');
+            const radiusValue = document.getElementById('radius-value');
+
+            function updateStyles() {
+                previewBtn.style.backgroundColor = bgColorInput.value;
+                previewBtn.style.fontFamily = fontSelect.value;
+                previewBtn.style.borderRadius = `${radiusSlider.value}px`;
+                radiusValue.textContent = radiusSlider.value;
+            }
+            bgColorInput.addEventListener('input', updateStyles);
+            fontSelect.addEventListener('input', updateStyles);
+            radiusSlider.addEventListener('input', updateStyles);
+            updateStyles();
+        }
+        function setupGenerativeArt() {
+            showAiHelper("Research from Bal (2019) found that gamified environments can significantly enhance student engagement and creativity. Let's see it in action!", 6000);
+            const canvas = document.getElementById('art-canvas');
+            const ctx = canvas.getContext('2d');
+            const complexitySlider = document.getElementById('art-complexity');
+            const sizeSlider = document.getElementById('art-size');
+
+            function drawArt() {
+                const complexity = complexitySlider.value;
+                const size = sizeSlider.value;
+                document.getElementById('art-complexity-val').textContent = complexity;
+                document.getElementById('art-size-val').textContent = size;
+
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let i = 0; i < complexity * 10; i++) {
+                    ctx.beginPath();
+                    ctx.fillStyle = `hsla(${Math.random() * 360}, 70%, 50%, 0.5)`;
+                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            complexitySlider.addEventListener('input', drawArt);
+            sizeSlider.addEventListener('input', drawArt);
+            drawArt();
+        }
+        function setupAnimationShowcase() {
+            const target = document.getElementById('animation-target');
+            const buttons = document.querySelectorAll('.anim-btn');
+            let currentAnim = '';
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const animClass = button.dataset.anim;
+                    // Reset animation
+                    if (currentAnim) {
+                        target.classList.remove(currentAnim, 'animate-infinite');
+                    }
+                    // A little hack to restart the animation
+                    void target.offsetWidth; 
+
+                    // Apply new animation
+                    currentAnim = animClass;
+                    target.classList.add(animClass, 'animate-infinite');
+                });
+            });
+        }
+        function setupGlassmorphismEditor() {
+            const preview = document.getElementById('glass-preview');
+            const fromColorInput = document.getElementById('glass-color-from');
+            const toColorInput = document.getElementById('glass-color-to');
+            const blurSlider = document.getElementById('glass-blur');
+            const opacitySlider = document.getElementById('glass-opacity');
+
+            function updateGlassStyles() {
+                const fromColor = fromColorInput.value;
+                const toColor = toColorInput.value;
+                const blur = blurSlider.value;
+                const opacity = opacitySlider.value / 100;
+                
+                document.getElementById('blur-value').textContent = blur;
+                document.getElementById('opacity-value').textContent = opacitySlider.value;
+
+                // Create hex with alpha for background color
+                const fromColorRgb = parseInt(fromColor.slice(1, 3), 16);
+                const fromColorRgbG = parseInt(fromColor.slice(3, 5), 16);
+                const fromColorRgbB = parseInt(fromColor.slice(5, 7), 16);
+                
+                preview.style.backgroundColor = `rgba(${fromColorRgb}, ${fromColorRgbG}, ${fromColorRgbB}, ${opacity})`;
+                preview.style.backgroundImage = `linear-gradient(to right, ${fromColor}33, ${toColor}33)`;
+                preview.style.backdropFilter = `blur(${blur}px)`;
+                preview.style.webkitBackdropFilter = `blur(${blur}px)`; // For Safari
+                preview.style.border = `1px solid rgba(255, 255, 255, ${opacity > 0.3 ? 0.2 : 0.1})`;
+            }
+
+            fromColorInput.addEventListener('input', updateGlassStyles);
+            toColorInput.addEventListener('input', updateGlassStyles);
+            blurSlider.addEventListener('input', updateGlassStyles);
+            opacitySlider.addEventListener('input', updateGlassStyles);
+            updateGlassStyles();
+        }
+        function setupBoxShadowEditor() {
+            const preview = document.getElementById('shadow-preview');
+            const xSlider = document.getElementById('shadow-x');
+            const ySlider = document.getElementById('shadow-y');
+            const blurSlider = document.getElementById('shadow-blur');
+            const colorInput = document.getElementById('shadow-color');
+
+            function updateShadowStyles() {
+                const x = xSlider.value;
+                const y = ySlider.value;
+                const blur = blurSlider.value;
+                const color = colorInput.value;
+
+                document.getElementById('shadow-x-val').textContent = x;
+                document.getElementById('shadow-y-val').textContent = y;
+                document.getElementById('shadow-blur-val').textContent = blur;
+                
+                preview.style.boxShadow = `${x}px ${y}px ${blur}px 0px ${color}`;
+            }
+            xSlider.addEventListener('input', updateShadowStyles);
+            ySlider.addEventListener('input', updateShadowStyles);
+            blurSlider.addEventListener('input', updateShadowStyles);
+            colorInput.addEventListener('input', updateShadowStyles);
+            updateShadowStyles();
+        }
+        function setupSimonGame() {
+            simonGame = new SimonGame();
+            document.getElementById('simon-start-btn').addEventListener('click', () => simonGame.start());
+        }
+        function setupSoundboard() {
+            const container = document.getElementById('soundboard-container');
+            const sounds = [
+                { name: 'Success', note: 'C5', duration: '8n', icon: '🎉' },
+                { name: 'Click', note: 'C4', duration: '16n', icon: '🖱️' },
+                { name: 'Error', note: 'C2', duration: '8n', type: 'square', icon: '❌' },
+                { name: 'Powerup', note: 'G5', duration: '16n', icon: '⭐' },
+                { name: 'Laser', note: 'A5', duration: '32n', type: 'triangle', icon: '🔫' },
+                { name: 'Jump', note: 'E4', duration: '16n', icon: '🤸' }
+            ];
+
+            const synth = new Tone.Synth().toDestination();
+            
+            sounds.forEach(sound => {
+                const button = document.createElement('button');
+                button.className = 'bg-slate-700 hover:bg-sky-600 p-4 rounded-lg text-lg flex flex-col items-center justify-center gap-2';
+                button.innerHTML = `<span class="text-4xl">${sound.icon}</span><span>${sound.name}</span>`;
+                button.onclick = () => {
+                    // Ensure Tone.js is started by user interaction
+                    Tone.start();
+                    synth.triggerAttackRelease(sound.note, sound.duration);
+                };
+                container.appendChild(button);
+            });
+        }
+        function setupPhysicsSandbox() {
+            const container = document.getElementById('physics-container');
+            if(!container || !Matter) {
+                console.error("Physics container or Matter.js not found.");
+                return; 
+            }
+
+            // Defer execution to ensure the container is rendered and has dimensions
+            setTimeout(() => {
+                if (physicsEngine) return; // Prevent re-initialization
+                const { Engine, Render, Runner, World, Bodies, Mouse, MouseConstraint } = Matter;
+                const bounds = container.getBoundingClientRect();
+                
+                if (bounds.width <= 0 || bounds.height <= 0) {
+                    console.error("Physics container has no dimensions. Cannot initialize Matter.js");
+                    container.innerHTML = `<p class="text-red-500 text-center p-4">Error: Could not initialize physics engine. Container has no size.</p>`;
+                    return;
+                }
+
+                const engine = Engine.create();
+                const render = Render.create({
+                    element: container,
+                    engine: engine,
+                    options: { 
+                        width: bounds.width, 
+                        height: bounds.height, 
+                        wireframes: false, 
+                        background: 'transparent' 
+                    }
+                });
+
+                const ground = Bodies.rectangle(bounds.width / 2, bounds.height, bounds.width + 20, 60, { isStatic: true, render: { fillStyle: '#0f766e' } });
+                const wallLeft = Bodies.rectangle(-30, bounds.height / 2, 60, bounds.height, { isStatic: true, render: { visible: false } });
+                const wallRight = Bodies.rectangle(bounds.width + 30, bounds.height / 2, 60, bounds.height, { isStatic: true, render: { visible: false } });
+                World.add(engine.world, [ground, wallLeft, wallRight]);
+                
+                const mouse = Mouse.create(render.canvas);
+                const mouseConstraint = MouseConstraint.create(engine, { mouse: mouse, constraint: { stiffness: 0.2, render: { visible: false } } });
+                World.add(engine.world, mouseConstraint);
+                
+                const clickHandler = () => {
+                    const randomColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    const body = Math.random() > 0.5
+                        ? Bodies.rectangle(Math.random() * bounds.width * 0.8 + bounds.width * 0.1, 0, 40, 40, { render: { fillStyle: randomColor } })
+                        : Bodies.circle(Math.random() * bounds.width * 0.8 + bounds.width * 0.1, 0, 20, { render: { fillStyle: randomColor } });
+                    World.add(engine.world, body);
+                };
+                container.addEventListener('mousedown', clickHandler);
+                
+                Render.run(render);
+                const runner = Runner.create();
+                Runner.run(runner, engine);
+
+                physicsEngine = {
+                    stop: () => {
+                        Render.stop(render);
+                        Runner.stop(runner);
+                        World.clear(engine.world);
+                        Engine.clear(engine);
+                        if(render.canvas) render.canvas.remove();
+                        container.removeEventListener('mousedown', clickHandler);
+                    }
+                };
+            }, 0);
+        }
+        function setupShowcasePhysics() {
+            const container = document.getElementById('showcase-physics-container');
+            if(!container || !Matter) return; 
+            
+            setTimeout(() => {
+                const { Engine, Render, Runner, World, Bodies } = Matter;
+                 const bounds = container.getBoundingClientRect();
+                 if (bounds.width <= 0) return;
+
+                const engine = Engine.create({ gravity: { y: 0.5 } });
+                const render = Render.create({
+                    element: container,
+                    engine: engine,
+                    options: { width: bounds.width, height: bounds.height, wireframes: false, background: 'transparent' }
+                });
+                const ground = Bodies.rectangle(bounds.width/2, bounds.height, bounds.width, 60, { isStatic: true, render: { fillStyle: '#0f766e' } });
+                const wallLeft = Bodies.rectangle(0, bounds.height/2, 10, bounds.height, { isStatic: true, render: { visible: false } });
+                const wallRight = Bodies.rectangle(bounds.width, bounds.height/2, 10, bounds.height, { isStatic: true, render: { visible: false } });
+                World.add(engine.world, [ground, wallLeft, wallRight]);
+                
+                container.addEventListener('click', (event) => {
+                    const randomColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    const body = Math.random() > 0.5
+                        ? Bodies.rectangle(event.offsetX, 0, 30, 30, { render: { fillStyle: randomColor } })
+                        : Bodies.circle(event.offsetX, 0, 15, { render: { fillStyle: randomColor } });
+                    World.add(engine.world, body);
+                });
+
+                Render.run(render);
+                const runner = Runner.create();
+                Runner.run(runner, engine);
+            }, 0);
+        }
+        function setupShowcaseMemory() {
+            const cards = document.querySelectorAll('.showcase-memory-card');
+            let flippedCards = [];
+            let canFlip = true;
+
+            const handleCardFlip = (card) => {
+                if (!canFlip || card.classList.contains('flipped') || flippedCards.length >= 2) return;
+                
+                card.classList.add('flipped');
+                flippedCards.push(card);
+
+                if (flippedCards.length === 2) {
+                    canFlip = false;
+                    const [card1, card2] = flippedCards;
+                    if (card1.dataset.symbol === card2.dataset.symbol) {
+                        flippedCards = [];
+                        canFlip = true;
+                    } else {
+                        setTimeout(() => {
+                            card1.classList.remove('flipped');
+                            card2.classList.remove('flipped');
+                            flippedCards = [];
+                            canFlip = true;
+                        }, 1000);
+                    }
+                }
+            };
+
+            cards.forEach(card => {
+                card.addEventListener('click', () => handleCardFlip(card));
+                card.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevents a "ghost" click from firing after the touch
+                    handleCardFlip(card);
+                });
+            });
+        }
+
+        function setupShowcaseQuiz() {
+            const options = document.querySelectorAll('.quiz-option');
+            const correctAnswer = 'Paris';
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    if (option.textContent === correctAnswer) {
+                        option.classList.remove('bg-slate-700');
+                        option.classList.add('bg-emerald-600');
+                    } else {
+                        option.classList.remove('bg-slate-700');
+                        option.classList.add('bg-red-600');
+                    }
+                    options.forEach(b => b.disabled = true);
+                });
+            });
+        }
+
+        function setupShowcaseArt() {
+            const canvas = document.getElementById('showcase-art-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+
+            const drawAtPoint = (x, y) => {
+                ctx.fillStyle = `hsla(${Math.random() * 360}, 70%, 50%, 0.5)`;
+                ctx.beginPath();
+                ctx.arc(x, y, 15, 0, Math.PI * 2);
+                ctx.fill();
+            };
+            
+            // Mouse event for desktops
+            canvas.addEventListener('mousemove', (e) => {
+                drawAtPoint(e.offsetX, e.offsetY);
+            });
+
+            // Touch events for iPad/trackpad
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault(); // Prevent scrolling while drawing
+                const rect = canvas.getBoundingClientRect();
+                for (let i = 0; i < e.touches.length; i++) {
+                    const touch = e.touches[i];
+                    drawAtPoint(touch.clientX - rect.left, touch.clientY - rect.top);
+                }
+            }, { passive: false });
+        }
+
+        function setupShowcaseStory() {
+            const storyTextEl = document.getElementById('story-text');
+            const choicesContainer = document.getElementById('story-choices');
+            const story = {
+                start: { text: 'You stand at a fork in the road.', choices: [{ text: 'Go left', target: 'left_path' }, { text: 'Go right', target: 'right_path' }] },
+                left_path: { text: 'You find a hidden treasure chest!', choices: [{ text: 'Start over', target: 'start' }] },
+                right_path: { text: 'You encounter a friendly dragon.', choices: [{ text: 'Start over', target: 'start' }] }
+            };
+
+            function showPart(partId) {
+                const part = story[partId];
+                storyTextEl.textContent = part.text;
+                choicesContainer.innerHTML = part.choices.map(choice => 
+                    `<button class="primary-btn text-white font-bold py-2 px-4 rounded-lg" data-target="${choice.target}">${choice.text}</button>`
+                ).join('');
+            }
+            
+            choicesContainer.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    showPart(e.target.dataset.target);
+                }
+            });
+
+            showPart('start');
+        }
+
+        function setupShowcaseSorter() {
+            const draggables = document.querySelectorAll('.draggable');
+            const dropzones = document.querySelectorAll('.dropzone');
+            let selectedItem = null; // For click-to-move logic
+
+            // --- Standard Drag and Drop for Mouse ---
+            draggables.forEach(item => {
+                item.addEventListener('dragstart', e => {
+                    // Unselect any tapped items when starting a drag
+                    if (selectedItem) {
+                        selectedItem.classList.remove('ring-2', 'ring-sky-400', 'scale-105');
+                        selectedItem = null;
+                    }
+                    e.dataTransfer.setData('text/plain', item.id);
+                    setTimeout(() => item.classList.add('opacity-50'), 0);
+                });
+                item.addEventListener('dragend', () => item.classList.remove('opacity-50'));
+            });
+
+            dropzones.forEach(zone => {
+                zone.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    zone.classList.add('bg-sky-500/20');
+                });
+                zone.addEventListener('dragleave', () => zone.classList.remove('bg-sky-500/20'));
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('bg-sky-500/20');
+                    const id = e.dataTransfer.getData('text');
+                    const item = document.getElementById(id);
+                    if (zone.dataset.category === item.dataset.category) {
+                        zone.appendChild(item);
+                        item.classList.add('bg-emerald-600');
+                        item.draggable = false;
+                    }
+                });
+            });
+
+            // --- Click/Tap to move for Touch Devices ---
+            const handleItemClick = (item) => {
+                if (item.draggable === false) return; // Item already placed
+
+                if (selectedItem === item) {
+                    item.classList.remove('ring-2', 'ring-sky-400', 'scale-105');
+                    selectedItem = null;
+                } else {
+                    if (selectedItem) {
+                        selectedItem.classList.remove('ring-2', 'ring-sky-400', 'scale-105');
+                    }
+                    selectedItem = item;
+                    item.classList.add('ring-2', 'ring-sky-400', 'scale-105');
+                }
+            };
+
+            const handleZoneClick = (zone) => {
+                if (!selectedItem) return;
+
+                if (zone.dataset.category === selectedItem.dataset.category) {
+                    zone.appendChild(selectedItem);
+                    selectedItem.classList.remove('ring-2', 'ring-sky-400', 'scale-105');
+                    selectedItem.classList.add('bg-emerald-600');
+                    selectedItem.draggable = false;
+                    selectedItem = null; // Deselect after successful placement
+                } else {
+                    // Give feedback for wrong placement but KEEP item selected
+                    selectedItem.classList.add('animate-shake');
+                    setTimeout(() => {
+                        if (selectedItem) {
+                            selectedItem.classList.remove('animate-shake');
+                        }
+                    }, 500);
+                }
+            };
+            
+            draggables.forEach(item => {
+                item.addEventListener('click', () => handleItemClick(item));
+                item.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevents a "ghost" click from firing after the touch
+                    handleItemClick(item);
+                });
+            });
+
+            dropzones.forEach(zone => {
+                zone.addEventListener('click', () => handleZoneClick(zone));
+                zone.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevents a "ghost" click from firing after the touch
+                    handleZoneClick(zone);
+                });
+            });
+        }
+
+        function setupShowcaseChart() {
+            // This example is pure HTML/CSS, so no JS setup is needed.
+        }
+
+        function setupShowcaseApi() {
+            const input = document.getElementById('country-input');
+            const button = document.getElementById('fetch-btn');
+            const resultEl = document.getElementById('api-result');
+
+            button.addEventListener('click', async () => {
+                const country = input.value.trim();
+                if (!country) {
+                    resultEl.innerHTML = `<p class="text-red-400">Please enter a country name.</p>`;
+                    return;
+                }
+                resultEl.innerHTML = `<p class="text-sky-400">Fetching...</p>`;
+                try {
+                    const response = await fetch(`https://restcountries.com/v3.1/name/${country}?fields=capital`);
+                    if (!response.ok) throw new Error('Country not found.');
+                    const data = await response.json();
+                    resultEl.innerHTML = `<p class="text-xl font-bold">Capital: ${data[0].capital[0]}</p>`;
+                } catch (error) {
+                    resultEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+                }
+            });
+        }
+
+        function setupPathfindingMaze() {
+            pathfindingGame = new PathfindingGame();
+        }
+        function setupMemoryMatch() {
+            memoryGame = new MemoryMatchGame();
+        }
+        function setupWhackAGem() {
+            whackAGemGame = new WhackAGemGame();
+        }
+        function setupDragDropListeners() {
+            const draggable = document.getElementById('draggable-folder');
+            const dropZone = document.getElementById('drop-zone');
+            
+            // --- Standard Drag and Drop for Mouse ---
+            draggable.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', 'folder');
+                setTimeout(() => draggable.classList.add('opacity-50'), 0);
+            });
+            draggable.addEventListener('dragend', () => draggable.classList.remove('opacity-50'));
+
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('bg-sky-500/20', 'border-sky-500'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-sky-500/20', 'border-sky-500'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                handleDrop();
+            });
+
+            // --- Touch-based Drag and Drop for iPad ---
+            let touchDragGhost = null;
+            draggable.addEventListener('touchstart', (e) => {
+                if (draggable.draggable === false) return;
+                const touch = e.touches[0];
+                touchDragGhost = draggable.cloneNode(true);
+                touchDragGhost.style.position = 'absolute';
+                touchDragGhost.style.pointerEvents = 'none';
+                touchDragGhost.style.zIndex = '1000';
+                touchDragGhost.style.opacity = '0.7';
+                document.body.appendChild(touchDragGhost);
+                updateGhostPosition(touch);
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!touchDragGhost) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                updateGhostPosition(touch);
+                const rect = dropZone.getBoundingClientRect();
+                if (touch.clientX > rect.left && touch.clientX < rect.right &&
+                    touch.clientY > rect.top && touch.clientY < rect.bottom) {
+                    dropZone.classList.add('bg-sky-500/20', 'border-sky-500');
+                } else {
+                    dropZone.classList.remove('bg-sky-500/20', 'border-sky-500');
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', (e) => {
+                if (!touchDragGhost) return;
+                const touch = e.changedTouches[0];
+                const rect = dropZone.getBoundingClientRect();
+                if (touch.clientX > rect.left && touch.clientX < rect.right &&
+                    touch.clientY > rect.top && touch.clientY < rect.bottom) {
+                    handleDrop();
+                }
+                document.body.removeChild(touchDragGhost);
+                touchDragGhost = null;
+                dropZone.classList.remove('bg-sky-500/20', 'border-sky-500');
+            });
+            
+            const updateGhostPosition = (touch) => {
+                touchDragGhost.style.left = `${touch.clientX - touchDragGhost.offsetWidth / 2}px`;
+                touchDragGhost.style.top = `${touch.clientY - touchDragGhost.offsetHeight / 2}px`;
+            };
+
+            const handleDrop = () => {
+                dropZone.classList.remove('bg-sky-500/20', 'border-sky-500');
+                dropZone.classList.add('border-emerald-500', 'bg-emerald-500/20');
+                dropZone.querySelector('#drop-zone-text').textContent = '✅ Upload Complete!';
+                draggable.draggable = false;
+                draggable.style.display = 'none';
+
+                showAiHelper('Great job! You just simulated deploying a game.');
+                animateGems(25);
+                earnBadge('Netlify Deployer');
+                showContinueButton();
+            };
+        }
+        
+        // --- GAME CLASSES ---
+        class PathfindingGame {
+             constructor(gridSize = 10) {
+                this.gridSize = gridSize;
+                this.container = document.getElementById('maze-container');
+                this.statusEl = document.getElementById('maze-status');
+                this.grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
+                this.start = null; this.end = null;
+                this.init();
+            }
+             init() {
+                this.container.innerHTML = '';
+                // Add random walls
+                 for(let i = 0; i < this.gridSize * 2; i++) {
+                      const r = Math.floor(Math.random() * this.gridSize);
+                      const c = Math.floor(Math.random() * this.gridSize);
+                      this.grid[r][c] = 1;
+                 }
+                 for (let r = 0; r < this.gridSize; r++) {
+                    for (let c = 0; c < this.gridSize; c++) {
+                        const cell = document.createElement('div');
+                        cell.classList.add('maze-cell', 'w-full', 'h-full', 'rounded');
+                        cell.dataset.r = r; cell.dataset.c = c;
+                        if (this.grid[r][c] === 1) cell.classList.add('bg-slate-700');
+                        else cell.classList.add('bg-slate-800');
+                        this.container.appendChild(cell);
+                    }
+                }
+                this.statusEl.textContent = 'Click to select a START point.';
+                this.container.addEventListener('click', this.handleClick.bind(this));
+            }
+             handleClick(e) {
+                const cell = e.target.closest('.maze-cell');
+                if (!cell || cell.classList.contains('bg-slate-700')) return;
+                const r = parseInt(cell.dataset.r);
+                const c = parseInt(cell.dataset.c);
+                 if (!this.start) {
+                    this.start = {r, c};
+                    cell.classList.add('bg-emerald-500');
+                    this.statusEl.textContent = 'Click to select an END point.';
+                } else if (!this.end) {
+                    this.end = {r, c};
+                    cell.classList.add('bg-red-500');
+                    this.statusEl.textContent = 'Calculating path...';
+                    this.findPath();
+                }
+            }
+             findPath() {
+                 const queue = [[this.start.r, this.start.c]];
+                 const visited = new Set([`${this.start.r},${this.start.c}`]);
+                 const parentMap = new Map();
+                 const moves = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+                 while(queue.length > 0) {
+                      const [r, c] = queue.shift();
+                      if (r === this.end.r && c === this.end.c) {
+                          this.drawPath(parentMap);
+                          return;
+                      }
+                      for (const [dr, dc] of moves) {
+                          const nr = r + dr; const nc = c + dc;
+                          if (nr >= 0 && nr < this.gridSize && nc >= 0 && nc < this.gridSize && this.grid[nr][nc] === 0 && !visited.has(`${nr},${nc}`)) {
+                              visited.add(`${nr},${nc}`);
+                              parentMap.set(`${nr},${nc}`, `${r},${c}`);
+                              queue.push([nr, nc]);
+                          }
+                      }
+                 }
+                this.statusEl.textContent = "No path found!";
+            }
+             drawPath(parentMap) {
+                let current = `${this.end.r},${this.end.c}`;
+                const path = [];
+                 while(current && current !== `${this.start.r},${this.start.c}`) {
+                      path.unshift(current);
+                      current = parentMap.get(current);
+                 }
+                 this.statusEl.textContent = `Path found! Length: ${path.length}`;
+                 path.forEach((pos, i) => {
+                      setTimeout(() => {
+                          const [r, c] = pos.split(',').map(Number);
+                          const cell = this.container.querySelector(`[data-r='${r}'][data-c='${c}']`);
+                          if (cell) cell.classList.add('bg-sky-500');
+                      }, i * 50);
+                 });
+                 if(path.length > 0) {
+                    showAiHelper("Path found! Zirawaga et al. (2017) found that puzzles in lessons enhance motivation and problem-solving skills.");
+                    animateGems(15);
+                    earnBadge("Pathfinder");
+                    showContinueButton();
+                }
+            }
+            stop() { this.container.removeEventListener('click', this.handleClick); }
+        }
+        class MemoryMatchGame {
+            constructor() {
+                this.board = document.getElementById('memory-board');
+                this.statusEl = document.getElementById('memory-status');
+                this.timeEl = document.getElementById('memory-time');
+                this.symbols = ['🚀', '🎨', '🔊', '⚙️', '💎', '🏆'];
+                this.cards = [];
+                this.flippedCards = [];
+                this.matchedPairs = 0;
+                this.canFlip = true;
+                this.timeLeft = 60;
+                this.timerInterval = null;
+                this.init();
+            }
+            init() {
+                const cardSymbols = [...this.symbols, ...this.symbols].sort(() => 0.5 - Math.random());
+                this.board.innerHTML = '';
+                cardSymbols.forEach(symbol => {
+                    const card = document.createElement('div');
+                    card.className = 'memory-card relative w-full aspect-square cursor-pointer';
+                    card.style.transformStyle = 'preserve-3d';
+                    card.dataset.symbol = symbol;
+                    card.innerHTML = `
+                        <div class="absolute w-full h-full bg-sky-600 rounded-lg flex items-center justify-center" style="backface-visibility: hidden;"></div>
+                        <div class="absolute w-full h-full bg-slate-700 rounded-lg flex items-center justify-center text-4xl" style="transform: rotateY(180deg); backface-visibility: hidden;">${symbol}</div>
+                    `;
+                    this.board.appendChild(card);
+                    card.addEventListener('click', () => this.flipCard(card));
+                });
+                this.startGame();
+            }
+            startGame() {
+                this.timeLeft = 60;
+                this.timeEl.textContent = this.timeLeft;
+                this.canFlip = true;
+                this.timerInterval = setInterval(() => {
+                    this.timeLeft--;
+                    this.timeEl.textContent = this.timeLeft;
+                    if (this.timeLeft <= 0) {
+                        this.gameOver();
+                    }
+                }, 1000);
+            }
+            flipCard(card) {
+                if (!this.canFlip || card.classList.contains('flipped') || this.flippedCards.length >= 2) return;
+                card.classList.add('flipped');
+                this.flippedCards.push(card);
+                if (this.flippedCards.length === 2) {
+                    this.checkForMatch();
+                }
+            }
+            checkForMatch() {
+                this.canFlip = false;
+                const [card1, card2] = this.flippedCards;
+                if (card1.dataset.symbol === card2.dataset.symbol) {
+                    this.statusEl.textContent = "It's a match!";
+                    this.matchedPairs++;
+                    this.flippedCards = [];
+                    this.canFlip = true;
+                    if (this.matchedPairs === this.symbols.length) {
+                        this.winGame();
+                    }
+                } else {
+                    this.statusEl.textContent = "Not a match.";
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        this.flippedCards = [];
+                        this.canFlip = true;
+                        this.statusEl.textContent = "";
+                    }, 1200);
+                }
+            }
+            winGame() {
+                clearInterval(this.timerInterval);
+                this.statusEl.textContent = "You found all the pairs!";
+                showAiHelper("You found them all! According to Zirawaga et al. (2017), using puzzles and brain teasers in lessons can boost student engagement significantly.");
+                animateGems(25);
+                earnBadge("Pair Programmer");
+                showContinueButton();
+            }
+            gameOver() {
+                clearInterval(this.timerInterval);
+                this.canFlip = false;
+                this.statusEl.textContent = "Time's Up!";
+                showAiHelper("Time's up! Try again!");
+                showContinueButton();
+            }
+            stop() { clearInterval(this.timerInterval); }
+        }
+        class WhackAGemGame {
+            constructor() {
+                this.grid = document.getElementById('whack-grid');
+                this.scoreEl = document.getElementById('whack-score');
+                this.timeEl = document.getElementById('whack-time');
+                this.score = 0;
+                this.time = 20;
+                this.gameInterval = null;
+                this.activeHole = null;
+                this.boundClickHandler = this.handleMoleClick.bind(this);
+                this.init();
+            }
+
+            init() {
+                this.grid.innerHTML = '';
+                for (let i = 0; i < 9; i++) {
+                    const holeWrapper = document.createElement('div');
+                    holeWrapper.className = 'aspect-square bg-slate-800 rounded-full flex items-center justify-center p-2';
+                    const hole = document.createElement('div');
+                    hole.className = 'w-full h-full bg-black/50 rounded-full flex items-center justify-center text-4xl cursor-pointer transition-transform duration-200';
+                    hole.dataset.index = i;
+                    holeWrapper.appendChild(hole);
+                    this.grid.appendChild(holeWrapper);
+                }
+                this.grid.addEventListener('click', this.boundClickHandler);
+                this.startGameLoop();
+            }
+
+            startGameLoop() {
+                this.gameInterval = setInterval(() => {
+                    if (this.time <= 0) {
+                        this.endGame();
+                        return;
+                    }
+                    this.time--;
+                    this.timeEl.textContent = this.time;
+
+                    // Randomly pop up a gem
+                    const holes = this.grid.querySelectorAll('.w-full.h-full');
+                    if (this.activeHole) {
+                        this.activeHole.innerHTML = '';
+                        this.activeHole.classList.remove('scale-110');
+                    }
+                    const randomIndex = Math.floor(Math.random() * holes.length);
+                    this.activeHole = holes[randomIndex];
+                    this.activeHole.innerHTML = '💎';
+                    this.activeHole.classList.add('scale-110');
+                }, 1000);
+            }
+
+            handleMoleClick(e) {
+                if (e.target === this.activeHole) {
+                    this.score++;
+                    this.scoreEl.textContent = this.score;
+                    this.activeHole.innerHTML = '';
+                    this.activeHole.classList.remove('scale-110');
+                    this.activeHole = null; // Prevent double scoring
+                    if (this.score >= 10) {
+                        this.endGame(true);
+                    }
+                }
+            }
+
+            endGame(win = false) {
+                clearInterval(this.gameInterval);
+                this.grid.removeEventListener('click', this.boundClickHandler);
+                this.grid.innerHTML = `
+                    <div class="col-span-3 text-center flex flex-col items-center justify-center h-full">
+                        <p class="text-3xl font-bold ${win ? 'text-emerald-400' : 'text-sky-400'}">${win ? 'You Win!' : "Time's Up!"}</p>
+                        <p class="text-slate-400 mt-2">You collected ${this.score} gems.</p>
+                    </div>
+                `;
+                showAiHelper(`Nice reflexes! Wang et al. (2024) noted that mastery challenges, rather than simple points, are key to increasing student motivation.`);
+                if (this.score > 0) {
+                    animateGems(this.score * 2);
+                    earnBadge("Gem Collector");
+                }
+                showContinueButton();
+            }
+            
+            stop() {
+                clearInterval(this.gameInterval);
+                if (this.grid) {
+                    this.grid.removeEventListener('click', this.boundClickHandler);
+                }
+            }
+        }
+        class SimonGame {
+            constructor() {
+                this.scoreEl = document.getElementById('simon-score');
+                this.statusEl = document.getElementById('simon-status');
+                this.buttons = document.querySelectorAll('.simon-btn');
+                this.synth = new Tone.Synth().toDestination();
+                this.notes = ['C4', 'E4', 'G4', 'C5'];
+                this.sequence = [];
+                this.playerSequence = [];
+                this.score = 0;
+                this.playerTurn = false;
+                this.isPlayingSequence = false;
+                this.boundHandler = this.handlePlayerClick.bind(this);
+            }
+            start() {
+                this.sequence = [];
+                this.score = 0;
+                this.updateScore();
+                this.buttons.forEach(btn => btn.addEventListener('click', this.boundHandler));
+                document.getElementById('simon-start-btn').disabled = true;
+                this.nextRound();
+            }
+            stop() {
+                this.playerTurn = false;
+                this.isPlayingSequence = false; // Flag to stop async sequence
+                this.buttons.forEach(btn => btn.removeEventListener('click', this.boundHandler));
+            }
+            updateScore() { this.scoreEl.textContent = this.score; }
+            nextRound() {
+                this.playerSequence = [];
+                this.playerTurn = false;
+                this.statusEl.textContent = "Watch carefully...";
+                this.sequence.push(Math.floor(Math.random() * 4));
+                this.playSequence();
+            }
+            async playSequence() {
+                this.isPlayingSequence = true;
+                await new Promise(res => setTimeout(res, 500)); // Delay before sequence starts
+                for (const index of this.sequence) {
+                    if (!this.isPlayingSequence) return; // Exit if game was stopped
+                    await this.lightUp(index, 400);
+                    await new Promise(res => setTimeout(res, 100));
+                }
+                if (!this.isPlayingSequence) return; // Check again after loop
+                this.playerTurn = true;
+                this.isPlayingSequence = false;
+                this.statusEl.textContent = "Your turn!";
+            }
+            lightUp(index, duration) {
+                return new Promise(resolve => {
+                    this.buttons[index].classList.add('lit');
+                    this.synth.triggerAttackRelease(this.notes[index], '8n');
+                    setTimeout(() => {
+                        this.buttons[index].classList.remove('lit');
+                        resolve();
+                    }, duration);
+                });
+            }
+            handlePlayerClick(e) {
+                if (!this.playerTurn) return;
+                const index = parseInt(e.target.dataset.index);
+                this.lightUp(index, 200);
+                this.playerSequence.push(index);
+                const lastIndex = this.playerSequence.length - 1;
+                if (this.playerSequence[lastIndex] !== this.sequence[lastIndex]) {
+                    this.gameOver();
+                    return;
+                }
+                if (this.playerSequence.length === this.sequence.length) {
+                    this.score++;
+                    this.updateScore();
+                    this.playerTurn = false;
+                    setTimeout(() => this.nextRound(), 1000);
+                }
+            }
+            gameOver() {
+                this.statusEl.textContent = "Game Over! Press Start to play again.";
+                this.playerTurn = false;
+                document.getElementById('simon-start-btn').disabled = false;
+                if (this.score > 0) {
+                    showAiHelper(`Great score! Research by Wang et al. (2024) found that students benefited most from mastery challenges like this, which foster persistence.`);
+                    animateGems(this.score * 5);
+                    earnBadge("Memory Master");
+                    showContinueButton();
+                }
+            }
+        }
+
+        function earnBadge(name) {
+             if (!gameState.badges.includes(name)) {
+                gameState.badges.push(name);
+                showNotification('success', `Badge Unlocked: <b>${name}</b>`);
+            }
+        }
+        
+        async function generateQuizWithAI() {
+            const topic = document.getElementById('ai-quiz-topic').value.trim();
+            const numQuestions = document.getElementById('ai-quiz-questions').value;
+            const generateBtn = document.getElementById('ai-generate-btn');
+            const loadingIndicator = document.getElementById('ai-loading-indicator');
+
+            if (!topic) {
+                showNotification('error', 'Please enter a topic for your quiz.');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.classList.add('opacity-50');
+            loadingIndicator.classList.remove('hidden');
+
+            const userQuery = `Generate ${numQuestions} multiple-choice questions about "${topic}". For each question, provide 4 options and indicate the zero-based index of the correct answer.`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                text: { type: "STRING", description: "The question text." },
+                                options: { type: "ARRAY", items: { type: "STRING" }, description: "An array of 4 possible answers." },
+                                answer: { type: "NUMBER", description: "The 0-based index of the correct answer in the options array." }
+                            },
+                            required: ["text", "options", "answer"]
+                        }
+                    }
+                }
+            };
+            
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (jsonText) {
+                    const newQuestions = JSON.parse(jsonText);
+                    // Filter out any malformed questions just in case
+                    const validQuestions = newQuestions.filter(q => q.text && Array.isArray(q.options) && q.options.length === 4 && typeof q.answer === 'number');
+                    
+                    gameState.currentCustomQuiz.push(...validQuestions);
+                    saveGameState();
+                    showNotification('success', `${validQuestions.length} questions about "${topic}" have been added to your quiz! Check the 'Manual Entry' tab to see them.`);
+                    // Switch back to manual tab to show the results
+                    renderQuizCreatorTabs('manual');
+                } else {
+                    throw new Error("No content received from AI.");
+                }
+
+            } catch (error) {
+                console.error("AI Quiz Generation Error:", error);
+                showNotification('error', 'The AI was unable to generate the quiz. Please check your connection or try a different topic.');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-50');
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+        
+        function animateGems(amount) {
+            const start = gameState.gems;
+            const end = start + amount;
+            gameState.gems = end;
+            let current = start;
+            const stepTime = 20;
+            const steps = Math.abs(end - start) / (Math.abs(amount) > 20 ? 2 : 1);
+            const increment = (end - start) / steps;
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    clearInterval(timer);
+                    current = end;
+                }
+                const gemEl = document.querySelector('#gem-counter span:first-child') || document.querySelector('#main-content #gem-counter span:first-child');
+                if(gemEl) gemEl.textContent = Math.floor(current);
+            }, stepTime);
+        }
+        
+        function checkCheatCode() {
+            const requiredCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+            if (JSON.stringify(cheatCodeInput) === JSON.stringify(requiredCode)) {
+                activateCheats();
+                cheatCodeInput = []; // Reset for next time
+            }
+        }
+        
+        function pushToCheatCode(key) {
+             const requiredCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+             cheatCodeInput.push(key);
+             cheatCodeInput = cheatCodeInput.slice(-requiredCode.length); // Keep the array at the code's length
+             checkCheatCode();
+        }
+
+        function activateCheats() {
+            gameState.gems = 999;
+            gameState.completedPaths = Object.keys(content);
+            Object.keys(content).forEach(path => {
+                if (content[path]) {
+                    gameState.progress[path] = content[path].length;
+                }
+            });
+            gameState.purchasedItems = shopItems.map(item => item.id);
+            showNotification('success', '<b>Cheat Activated!</b><br>All features unlocked and 999 gems added.');
+            earnBadge('Code Master');
+            saveGameState();
+        }
+
+        function applyVisuals() {
+            const themeId = gameState.activeTheme.replace('theme-', '');
+            const themeToggleButton = document.getElementById('theme-toggle-btn');
+
+            // Clear previous theme settings
+            document.body.dataset.theme = '';
+            document.body.classList.remove('light-mode');
+
+            if (themeId === 'default') {
+                themeToggleButton.classList.remove('hidden');
+                if (gameState.colorMode === 'light') {
+                    document.body.classList.add('light-mode');
+                }
+            } else {
+                themeToggleButton.classList.add('hidden');
+                document.body.dataset.theme = themeId;
+            }
+            
+            const cursorItem = shopItems.find(i => i.id === gameState.activeCursor);
+            document.body.style.cursor = cursorItem ? cursorItem.value : 'default';
+            elements.aiRobotContainer.innerHTML = aiSkins[gameState.activeAiSkin] || aiSkins['ai-default'];
+        }
+
+        function showAiHelper(message, duration = 5000) {
+            clearTimeout(aiHelperTimeout);
+            elements.aiHelperText.textContent = message;
+            elements.aiHelper.classList.add('active');
+            aiHelperTimeout = setTimeout(() => elements.aiHelper.classList.remove('active'), duration);
+        }
+        
+        function loadGameState() {
+            try {
+                const savedState = localStorage.getItem('gamifyCurriculumState');
+                if (savedState) {
+                    const parsed = JSON.parse(savedState);
+                    // Deep merge to ensure new default properties are added to saved states
+                    gameState = { 
+                        ...DEFAULT_GAME_STATE, 
+                        ...parsed,
+                        progress: { ...DEFAULT_GAME_STATE.progress, ...(parsed.progress || {}) },
+                        powerUps: { ...DEFAULT_GAME_STATE.powerUps, ...(parsed.powerUps || {}) },
+                    };
+                } else {
+                     // Deep copy of the default to avoid reference issues
+                    gameState = JSON.parse(JSON.stringify(DEFAULT_GAME_STATE));
+                }
+            } catch (error) {
+                console.error("Error loading game state:", error);
+                gameState = JSON.parse(JSON.stringify(DEFAULT_GAME_STATE));
+            }
+            render();
+        }
+
+        function saveGameState() {
+            localStorage.setItem('gamifyCurriculumState', JSON.stringify(gameState));
+            render(); // Re-render after every save to reflect changes
+        }
+
+        // --- SHOP LOGIC ---
+        window.purchaseItem = (itemId, cost) => {
+            const item = shopItems.find(i => i.id === itemId);
+            if (gameState.gems >= cost) {
+                if (item.type === 'powerup') {
+                    gameState.powerUps.fiftyFifty++;
+                } else if (!gameState.purchasedItems.includes(itemId)) {
+                    gameState.purchasedItems.push(itemId);
+                } else { return; } 
+                animateGems(-cost);
+                showNotification('success', 'Item purchased!');
+                saveGameState();
+            }
+        };
+        window.applyItem = (itemId) => {
+            const item = shopItems.find(i => i.id === itemId); if (!item) return;
+            if (item.type === 'theme') gameState.activeTheme = itemId;
+            else if (item.type === 'cursor') gameState.activeCursor = itemId;
+            else if (item.type === 'ai-skin') gameState.activeAiSkin = itemId;
+            saveGameState();
+        };
+        
+        // --- EVENT LISTENERS ---
+        buttons.restart.addEventListener('click', () => { 
+            showConfirm('Restart Game?', 'This will erase all your progress, badges, and gems. This action cannot be undone.', () => {
+                gameState = JSON.parse(JSON.stringify(DEFAULT_GAME_STATE));
+                saveGameState();
+                showNotification('success', 'Game has been reset to its original state.');
+            });
+        });
+        buttons.home.addEventListener('click', () => { gameState.view = 'home'; saveGameState(); });
+        
+        buttons.closeLibrary.addEventListener('click', () => elements.libraryModal.classList.add('hidden'));
+        buttons.closeNotification.addEventListener('click', () => elements.notificationModal.classList.add('hidden'));
+        buttons.confirmCancel.addEventListener('click', () => elements.confirmModal.classList.add('hidden'));
+        elements.aiRobotContainer.addEventListener('click', () => {
+             const randomTip = randomAiTips[Math.floor(Math.random() * randomAiTips.length)];
+             showAiHelper(randomTip);
+        });
+
+        // Cheat code listener
+        document.addEventListener('keydown', (e) => {
+            pushToCheatCode(e.key);
+        });
+        
+        initialize();
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
